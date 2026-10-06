@@ -358,9 +358,44 @@ button,input{
 
 .start-apps{
     padding:15px;
-    display:grid;
-    grid-template-columns:1fr 1fr;
+    display:flex;
+    flex-direction:column;
     gap:8px;
+    flex:1;
+    min-height:0;
+    overflow-y:auto;
+}
+
+.start-apps > .start-app{
+    flex:none;
+}
+
+.start-bottom-apps{
+    margin-top:auto;
+    padding:10px 12px 14px;
+
+    border-top:1px solid rgba(255,255,255,.08);
+
+    display:flex;
+    flex-direction:column;
+    gap:4px;
+
+    background:rgba(5,8,14,.25);
+}
+
+.start-bottom-apps .start-app{
+    width:100%;
+    min-width:0;
+    height:46px;
+
+    display:flex;
+    align-items:center;
+    gap:12px;
+
+    padding:0 14px;
+
+    box-sizing:border-box;
+    border-radius:9px;
 }
 
 .start-app{
@@ -388,7 +423,10 @@ button,input{
 .start-app .app-name{
     font-size:13px;
 }
-
+.start-menu{
+    height:800px;
+    max-height:calc(100vh - 90px);
+}
 /* =========================
    WINDOWS
 ========================= */
@@ -1115,7 +1153,7 @@ body.staros-light .window-title{color:#172033}.body.staros-light{}
 .star-browser{height:100%;display:flex;flex-direction:column;background:#f7f9fc;color:#172033}.star-browser.dark{background:#111827;color:#eef5ff}.star-browser-tabs{display:flex;align-items:end;gap:4px;padding:6px 7px 0;background:#e8edf5;overflow:auto}.star-browser.dark .star-browser-tabs{background:#172033}.star-browser-tab{display:flex;align-items:center;gap:7px;min-width:130px;max-width:220px;padding:9px 10px;border:0;border-radius:9px 9px 0 0;background:#d9e1ec;color:#26344d;cursor:pointer}.star-browser.dark .star-browser-tab{background:#202d43;color:#dfe9fa}.star-browser-tab.active{background:#fff}.star-browser.dark .star-browser-tab.active{background:#111827}.star-browser-tab-title{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1}.star-browser-tab-close{border:0;background:transparent;cursor:pointer;font-size:16px}.star-browser-newtab{border:0;background:transparent;font-size:22px;padding:6px 10px;cursor:pointer}.star-browser-toolbar{display:flex;gap:5px;padding:7px;background:#fff;border-bottom:1px solid #dbe2ec}.star-browser.dark .star-browser-toolbar{background:#172033;border-color:#29364c}.star-browser-toolbar button{height:34px;min-width:34px;border:1px solid #d3dce8;border-radius:8px;background:#f6f8fb;cursor:pointer}.star-browser.dark .star-browser-toolbar button{background:#202d43;border-color:#34435d;color:#fff}.star-browser-address{flex:1;height:34px;box-sizing:border-box;border:1px solid #d3dce8;border-radius:18px;padding:0 14px;outline:0}.star-browser.dark .star-browser-address{background:#0b1220;border-color:#34435d;color:#fff}.star-browser-body{position:relative;flex:1;min-height:0}.star-browser-frame{position:absolute;inset:0;width:100%;height:100%;border:0;background:#fff}.star-browser-home{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;overflow:auto;padding:44px 24px;box-sizing:border-box;background:linear-gradient(180deg,#f8fbff,#eef3fa)}.star-browser.dark .star-browser-home{background:linear-gradient(180deg,#111827,#0c1320)}.star-browser-home h1{font-size:38px;margin:10px 0}.star-browser-search{width:min(720px,90%);height:48px;border:1px solid #cfd8e6;border-radius:24px;padding:0 20px;font-size:16px;outline:0}.star-browser-shortcuts{display:flex;flex-wrap:wrap;justify-content:center;gap:10px;margin-top:24px;max-width:760px}.star-browser-shortcuts button{border:1px solid #d3dce8;background:#fff;padding:10px 15px;border-radius:10px;cursor:pointer}.star-browser.dark .star-browser-shortcuts button{background:#1b2739;color:#fff;border-color:#34435d}.star-browser-panel{position:absolute;right:10px;top:8px;width:340px;max-height:calc(100% - 16px);display:none;flex-direction:column;background:rgba(255,255,255,.98);border:1px solid #d5deea;border-radius:14px;box-shadow:0 20px 50px rgba(0,0,0,.25);z-index:5}.star-browser.dark .star-browser-panel{background:#172033;color:#fff;border-color:#34435d}.star-browser-panel.show{display:flex}.star-browser-panel-head{display:flex;justify-content:space-between;align-items:center;padding:12px 14px;border-bottom:1px solid #dde4ed}.star-browser-panel-body{overflow:auto;padding:8px}.star-browser-list-item{padding:10px;border-radius:9px;cursor:pointer}.star-browser-list-item:hover{background:rgba(90,145,240,.12)}.star-browser-status{font-size:11px;padding:4px 9px;background:#eef2f7;color:#66758b}.star-browser.dark .star-browser-status{background:#101827;color:#9db0cb}
 #starRecoveryOverlay{position:fixed;inset:0;z-index:100000;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.72);backdrop-filter:blur(12px)}#starRecoveryOverlay.show{display:flex}.star-recovery-card{width:390px;max-width:calc(100vw - 30px);padding:26px;border-radius:20px;background:#101a2a;border:1px solid rgba(110,170,255,.35);box-shadow:0 25px 80px rgba(0,0,0,.5)}.star-recovery-card h2{margin:0 0 8px}.star-recovery-card p{font-size:12px;color:#9eb0cb}.star-recovery-card input{width:100%;box-sizing:border-box;padding:12px;border-radius:10px;border:1px solid #31425f;background:#080f1c;color:#fff}.star-recovery-actions{display:flex;gap:8px;margin-top:12px}.star-recovery-actions button{flex:1;padding:10px;border:0;border-radius:9px;cursor:pointer}.star-recovery-primary{background:#3d8bff;color:#fff}.star-recovery-error{min-height:18px;color:#ff7885;font-size:12px;margin-top:7px}
 
-</style>
+
 
 /* Star Apps Store - card action buttons */
 .star-store-card{
@@ -1166,6 +1204,7 @@ body.staros-light .window-title{color:#172033}.body.staros-light{}
     .star-store-card-actions .explorer-button{width:100%;}
 }
 
+</style>
 </head>
 
 <body>
@@ -1264,65 +1303,90 @@ body.staros-light .window-title{color:#172033}.body.staros-light{}
 
         <div class="start-apps">
 
-            <button class="start-app"
-                    onclick="openExplorer();closeStartMenu()">
-                <span class="app-icon">📁</span>
-                <span class="app-name">Star Explorer</span>
-            </button>
-            <button class="start-app"
-        onclick="openBrowser();closeStartMenu()">
-    <span class="app-icon">🌐</span>
-    <span class="app-name">Star Browser</span>
-</button>
+    <!-- 通常アプリ -->
+    <button class="start-app"
+            onclick="openExplorer();closeStartMenu()">
+        <span class="app-icon">📁</span>
+        <span class="app-name">Star Explorer</span>
+    </button>
 
-<button class="start-app"
-        onclick="openCalculator();closeStartMenu()">
-    <span class="app-icon">🧮</span>
-    <span class="app-name">Calculator</span>
-</button>
+    <button class="start-app"
+            onclick="openBrowser();closeStartMenu()">
+        <span class="app-icon">🌐</span>
+        <span class="app-name">Star Browser</span>
+    </button>
 
-<button class="start-app"
-        onclick="openTextEditor();closeStartMenu()">
-    <span class="app-icon">📝</span>
-    <span class="app-name">Text Editor</span>
-</button>
+    <button class="start-app"
+            onclick="openCalculator();closeStartMenu()">
+        <span class="app-icon">🧮</span>
+        <span class="app-name">Calculator</span>
+    </button>
 
-<button class="start-app" id="startStarApp" onclick="launchInstalledStarApp('star')"><span class="app-icon">⭐</span><span class="app-name">STar</span></button>
-<button class="start-app" id="startStarIDEApp" onclick="launchInstalledStarApp('staride')"><span class="app-icon">💻</span><span class="app-name">Star IDE</span></button>
+    <button class="start-app"
+            onclick="openTextEditor();closeStartMenu()">
+        <span class="app-icon">📝</span>
+        <span class="app-name">Text Editor</span>
+    </button>
 
-<button class="start-app"
-        onclick="openAppStore();closeStartMenu()">
-    <span class="app-icon">🛒</span>
-    <span class="app-name">Star Apps Store</span>
-</button>
-            <button class="start-app"
-                    onclick="openTerminal();closeStartMenu()">
-                <span class="app-icon">💻</span>
-                <span class="app-name">Star Terminal</span>
-            </button>
+    <button class="start-app"
+            id="startStarApp"
+            onclick="launchInstalledStarApp('star')">
+        <span class="app-icon">⭐</span>
+        <span class="app-name">STar</span>
+    </button>
 
-            <button class="start-app"
-                    onclick="openSettings();closeStartMenu()">
-                <span class="app-icon">⚙️</span>
-                <span class="app-name">Star Settings</span>
-            </button>
+    <button class="start-app"
+            id="startStarIDEApp"
+            onclick="launchInstalledStarApp('staride')">
+        <span class="app-icon">💻</span>
+        <span class="app-name">Star IDE</span>
+    </button>
 
-            <button class="start-app"
-                    onclick="openAbout();closeStartMenu()">
-                <span class="app-icon">★</span>
-                <span class="app-name">About StarOS</span>
-            </button>
+    <button class="start-app"
+            onclick="openAppStore();closeStartMenu()">
+        <span class="app-icon">🛒</span>
+        <span class="app-name">Star Apps Store</span>
+    </button>
 
-            <button class="start-app" onclick="openStarTrash();closeStartMenu()"><span class="app-icon">🗑️</span><span class="app-name">ゴミ箱</span></button>
+    <button class="start-app"
+            onclick="openStarTrash();closeStartMenu()">
+        <span class="app-icon">🗑️</span>
+        <span class="app-name">ゴミ箱</span>
+    </button>
 
-            <div id="userStartApps" style="display:contents"></div>
+    <!-- ユーザーが追加したアプリ -->
+    <div id="userStartApps" style="display:contents"></div>
 
-            <button class="start-app" onclick="logoutStarOS();closeStartMenu()">
-                <span class="app-icon">🔒</span>
-                <span class="app-name">ログアウト</span>
-            </button>
+    <!-- 常に一番下 -->
+    <div class="start-bottom-apps">
 
-        </div>
+        <button class="start-app"
+                onclick="logoutStarOS();closeStartMenu()">
+            <span class="app-icon">🔒</span>
+            <span class="app-name">ログアウト</span>
+        </button>
+
+        <button class="start-app"
+                onclick="openAbout();closeStartMenu()">
+            <span class="app-icon">★</span>
+            <span class="app-name">About StarOS</span>
+        </button>
+
+        <button class="start-app"
+                onclick="openSettings();closeStartMenu()">
+            <span class="app-icon">⚙️</span>
+            <span class="app-name">Settings</span>
+        </button>
+
+        <button class="start-app"
+                onclick="openTerminal();closeStartMenu()">
+            <span class="app-icon">💻</span>
+            <span class="app-name">Terminal</span>
+        </button>
+
+    </div>
+
+</div>
 
     </div>
 

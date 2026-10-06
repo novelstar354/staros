@@ -107,9 +107,33 @@ button,input{
     position:absolute;
     width:2px;
     height:2px;
-    background:white;
+    background:#fff;
     border-radius:50%;
-    box-shadow:0 0 5px white;
+    box-shadow:0 0 5px rgba(255,255,255,.8);
+
+    animation-name:starFloat;
+    animation-timing-function:ease-in-out;
+    animation-iteration-count:infinite;
+}
+
+@keyframes starFloat{
+
+    0%{
+        transform:translate3d(0,0,0);
+    }
+
+    50%{
+        transform:
+            translate3d(
+                var(--star-x),
+                var(--star-y),
+                0
+            );
+    }
+
+    100%{
+        transform:translate3d(0,0,0);
+    }
 }
 
 /* =========================
@@ -236,10 +260,57 @@ button,input{
     cursor:pointer;
 }
 
-.taskbar-app:hover{
+/*.taskbar-app:hover{
     background:rgba(255,255,255,.1);
+}*/
+.taskbar-app{
+    position:relative;
+    width:44px;
+    height:44px;
+    border:0;
+    border-radius:10px;
+    background:transparent;
+    color:white;
+    font-size:21px;
+    cursor:pointer;
+
+    transition:
+        background .15s ease,
+        transform .15s ease,
+        box-shadow .15s ease;
 }
 
+.taskbar-app:hover{
+    background:rgba(255,255,255,.12);
+    transform:translateY(-2px) scale(1.06);
+    box-shadow:
+        0 5px 15px rgba(0,0,0,.22);
+}
+
+.taskbar-app:active{
+    transform:translateY(0) scale(.96);
+}
+
+.taskbar-app.taskbar-active::after{
+    content:"";
+
+    position:absolute;
+
+    left:50%;
+    bottom:2px;
+
+    width:5px;
+    height:5px;
+
+    border-radius:50%;
+
+    background:#dceaff;
+
+    transform:translateX(-50%);
+
+    box-shadow:
+        0 0 6px rgba(180,215,255,.7);
+}
 #clock{
     min-width:90px;
     text-align:center;
@@ -1271,28 +1342,7 @@ body.staros-light .window-title{color:#172033}.body.staros-light{}
             <button class="desktop-choice" data-desktop="2" onclick="switchStarDesktop(2)">デスクトップ 2<small>別の作業スペース</small></button>
         </div>
 
-        <div id="taskbarApps">
-
-            <button class="taskbar-app"
-                    title="Star Explorer"
-                    onclick="openExplorer()">
-                📁
-            </button>
-
-            <button class="taskbar-app"
-                    title="Star Terminal"
-                    onclick="openTerminal()">
-                💻
-            </button>
-
-            <button class="taskbar-app"
-                    title="Star Settings"
-                    onclick="openSettings()">
-                ⚙️
-            </button>
-
-        </div>
-
+       <div id="taskbarApps"></div>
         <button id="quickButton" title="クイック設定" onclick="toggleStarQuickSettings()">⚡</button>
         <div id="clock"></div>
 
@@ -1620,6 +1670,8 @@ function createStars(){
     const container =
         document.getElementById("stars");
 
+    container.innerHTML = "";
+
     for(let i=0;i<140;i++){
 
         const star =
@@ -1627,14 +1679,20 @@ function createStars(){
 
         star.className="star";
 
+        const size =
+            Math.random()*1.5+1;
+
+        const duration =
+            18 + Math.random()*25;
+
+        const delay =
+            Math.random()*-40;
+
         star.style.left =
             Math.random()*100+"%";
 
         star.style.top =
             Math.random()*100+"%";
-
-        const size =
-            Math.random()*2+1;
 
         star.style.width =
             size+"px";
@@ -1643,7 +1701,23 @@ function createStars(){
             size+"px";
 
         star.style.opacity =
-            Math.random()*.7+.2;
+            Math.random()*.6+.2;
+
+        star.style.setProperty(
+            "--star-x",
+            (Math.random()*80-40)+"px"
+        );
+
+        star.style.setProperty(
+            "--star-y",
+            (Math.random()*80-40)+"px"
+        );
+
+        star.style.animationDuration =
+            duration+"s";
+
+        star.style.animationDelay =
+            delay+"s";
 
         container.appendChild(star);
     }
@@ -2190,7 +2264,10 @@ function setupGenericWindow(win){
             if(win.classList.contains("window-closing")) return;
             win.classList.remove("window-open");
             win.classList.add("window-closing");
-            setTimeout(()=>win.remove(),160);
+            setTimeout(()=>{
+    win.remove();
+    updateTaskbarApps();
+},160);
         };
 
     }
@@ -2198,8 +2275,11 @@ function setupGenericWindow(win){
     if(minimize){
 
         minimize.onclick=()=>{
-            win.style.display="none";
-        };
+
+    win.style.display="none";
+
+    updateTaskbarApps();
+};
 
     }
 
@@ -2233,8 +2313,9 @@ function setupGenericWindow(win){
     );
 
     requestAnimationFrame(()=>{
-        win.classList.add("window-open");
-    });
+    win.classList.add("window-open");
+    updateTaskbarApps();
+});
 }
 
 function makeWindowDraggable(
@@ -2380,9 +2461,11 @@ function openApp(
 
     setupGenericWindow(win);
 
-    focusWindow(win);
+focusWindow(win);
 
-    return win;
+updateTaskbarApps();
+
+return win;
 }
 
 
@@ -6229,7 +6312,92 @@ function renderAppStore(win){
     content.querySelectorAll("[data-delete-html]").forEach(btn=>btn.onclick=()=>{saveStoreApps(loadStoreApps().filter(a=>a.id!==btn.dataset.deleteHtml));showToast("アプリを削除しました");renderAppStore(win);});
 }
 
+/* =========================================================
+   DYNAMIC TASKBAR
+========================================================= */
 
+function updateTaskbarApps(){
+
+    const taskbar =
+        document.getElementById("taskbarApps");
+
+    if(!taskbar) return;
+
+    taskbar.innerHTML="";
+
+    const windows =
+        [...document.querySelectorAll("#windowLayer .window")];
+
+    const apps=[];
+
+    windows.forEach(win=>{
+
+        if(win.dataset.starDesktop &&
+           Number(win.dataset.starDesktop)!==starCurrentDesktop){
+            return;
+        }
+
+        const title =
+            win.querySelector(".window-title")?.textContent
+            || "StarOS";
+
+        const icon =
+            win.querySelector(".window-icon")?.textContent
+            || "★";
+
+        if(!apps.some(app=>app.win===win)){
+            apps.push({
+                win,
+                title:title.trim(),
+                icon:icon.trim()
+            });
+        }
+    });
+
+    apps.forEach(app=>{
+
+        const button =
+            document.createElement("button");
+
+        button.className="taskbar-app";
+
+        button.title=app.title;
+
+        button.textContent=app.icon;
+
+        if(app.win.style.display!=="none"){
+            button.classList.add("taskbar-active");
+        }
+
+        button.onclick=()=>{
+
+            if(app.win.style.display==="none"){
+
+                app.win.style.display="";
+
+                focusWindow(app.win);
+
+            }else{
+
+                const z =
+                    Number(app.win.style.zIndex||0);
+
+                if(z===windowZIndex){
+
+                    app.win.style.display="none";
+
+                }else{
+
+                    focusWindow(app.win);
+                }
+            }
+
+            updateTaskbarApps();
+        };
+
+        taskbar.appendChild(button);
+    });
+}
 /* =========================================================
    GENERIC WINDOW CREATOR
 ========================================================= */

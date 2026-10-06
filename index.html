@@ -1,0 +1,1881 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>STar IDE</title>
+
+<meta name="theme-color" content="#0f172a">
+
+<link rel="manifest" href="manifest.json">
+<link rel="stylesheet" href="style.css">
+
+<link rel="preconnect" href="https://cdnjs.cloudflare.com">
+
+<link rel="icon" href="icon.png" sizes="16x16" type="image/png" />   
+</head>
+
+<body>
+<div class="background-grid"></div>
+<!-- ローディング -->
+<div id="loadingScreen">
+    <div class="loader">
+        <div class="logo">STar IDE</div>
+        <div class="spinner"></div>
+    </div>
+</div>
+
+<!-- ヘッダー -->
+<header id="topbar">
+
+    <div class="brand">
+        STar IDE
+    </div>
+
+    <div class="toolbar">
+
+        <div id="sidebar">
+    
+    <div id="fileList"></div>
+</div>
+<button id="languageBtn" type="button"> 🇯🇵 日本語 </button>
+<button id="newFileBtn">＋ New File</button>
+<button id="openFileBtn">
+    開く
+</button>
+
+<button id="saveFileBtn">
+    保存
+</button>
+<button id="searchBtn">検索</button>
+
+<button id="replaceBtnTop">
+    置換
+</button>
+
+<button id="replaceAllBtnTop">
+    一括置換
+</button>
+
+<button id="runBtn">
+    ▶ 実行
+</button>
+
+
+<button id="shortcutBtn">ショートカット</button>
+        <button id="helpBtn">使い方</button>
+
+
+    </div>
+
+</header>
+
+<!-- メイン -->
+<div id="workspace">
+
+    <!-- サイドバー -->
+    <aside id="fileSidebar">
+
+    <div class="sidebar-header">
+        EXPLORER
+    </div>
+
+    <div id="fileTree"></div>
+<div class="sidebar-header">
+    OUTLINE
+</div>
+
+<div class="outlineGroup">
+
+    <div class="outlineTitle">
+        ▶ Classes
+    </div>
+<div id="classList" class="outlineContent"></div>
+
+</div>
+
+<div class="outlineGroup">
+
+    <div class="outlineTitle">
+        ▶ Variables
+    </div>
+
+    <div id="varList" class="outlineContent"></div>
+
+</div>
+
+<div class="outlineGroup">
+
+    <div class="outlineTitle">
+        ▶ Arrays
+    </div>
+
+    <div id="arrayList" class="outlineContent"></div>
+
+</div>
+
+<div class="outlineGroup">
+
+    <div class="outlineTitle">
+        ▶ Constants
+    </div>
+
+    <div id="constList" class="outlineContent"></div>
+
+</div>
+
+<div class="outlineGroup">
+
+    <div class="outlineTitle" onclick="toggleOutline(this)">
+        ▶ Functions
+    </div>
+
+    <div id="funcList" class="outlineContent"></div>
+
+</div>
+    <div id="sidebarResizer"></div>
+
+</aside>
+
+   
+<!-- エディタ領域 -->
+<section id="editorArea">
+
+    <!-- 検索・置換パネル -->
+    <div id="searchPanel">
+
+        <div class="searchRow">
+
+            <input
+                type="text"
+                id="searchInput"
+                placeholder="検索..."
+                autocomplete="off"
+            >
+
+            <button id="findPrevBtn" title="前を検索">
+                ↑
+            </button>
+
+            <button id="findNextBtn" title="次を検索">
+                ↓
+            </button>
+
+            <span id="searchCount">
+                0 件
+            </span>
+
+        </div>
+
+        <div class="replaceRow">
+
+            <input
+                type="text"
+                id="replaceInput"
+                placeholder="置換..."
+                autocomplete="off"
+            >
+
+            <button id="replaceBtn">
+                置換
+            </button>
+
+            <button id="replaceAllBtn">
+                一括置換
+            </button>
+
+        </div>
+
+        <div class="searchOptions">
+
+            <label>
+                <input
+                    type="checkbox"
+                    id="caseSensitive"
+                >
+                大文字/小文字
+            </label>
+
+            <label>
+                <input
+                    type="checkbox"
+                    id="wholeWord"
+                >
+                単語単位
+            </label>
+
+            <label>
+                <input
+                    type="checkbox"
+                    id="regexSearch"
+                >
+                正規表現
+            </label>
+
+            <button id="closeSearchBtn">
+                ✕
+            </button>
+
+        </div>
+
+    </div>
+
+    <!-- タブ -->
+    <div id="tabs"></div>
+
+    <!-- Monaco -->
+    <div id="editor"></div>
+
+</section>
+
+
+</div>
+
+<!-- 下部パネル -->
+<div id="bottomPanel">
+
+   <div id="consoleHeader">
+
+    <span>
+        Console
+    </span>
+
+
+    <div id="consoleControls">
+
+        <label class="consoleCheck">
+
+            <input
+                type="checkbox"
+                id="consoleAutoScrollCheck"
+                checked
+            >
+
+            自動スクロール
+
+        </label>
+
+
+        <button
+            id="clearConsoleBtn"
+            class="consoleButton"
+        >
+            Clear
+        </button>
+
+
+    </div>
+
+</div>
+
+    <pre id="console"></pre>
+
+</div>
+
+<!-- ファイル選択 -->
+<input
+type="file"
+id="fileInput"
+accept=".star,.txt"
+style="display:none"
+/>
+<div id="helpPanel">
+
+    <div id="helpHeader">
+
+        <h2>STar Guide</h2>
+
+        <button id="closeHelp">
+            ✕
+        </button>
+
+    </div>
+
+    <div id="helpContent">
+<input
+    type="text"
+    id="helpSearch"
+    placeholder="ヘルプを検索..."
+>
+<pre id="help-ja">
+STar Language v3.1.9
+
+対応機能
+・変数
+・定数
+・配列
+・関数
+・条件分岐
+・ループ
+・入力
+・ランダム
+・クリア
+・終了
+・時間
+・マウス、キーボード
+・例外処理
+・canvas
+・同期処理
+・クラス
+・インポート
+
+
+# 出力
+print "Hello"
+("で括らない場合、変数を出力します。)
+
+# 変数
+let name = "STar"
+("無しで記述すると数字として扱われます。)
+
+#再代入
+name = "star"
+("無しで記述すると数字として扱われます。)
+
+#定数
+con name = "STar"
+("無しで記述すると数字として扱われます。)
+
+#文字連結
+let first ="STar"
+let last = "IDE"
+let title = first + " " + last
+
+let score = 100
+print "Score: " + score
+
+#ランダム
+let dice = random(1,6)
+print dice
+
+#最大・最小
+print min(10,20)
+print max(10,20)
+
+print min(nums)
+print max(nums)
+
+print max(nums) + 100
+
+#合計
+let nums = [10,20,30,40]
+print sum(nums)
+
+#平均
+print avg(nums)
+
+#遅延
+wait 500
+(ミリ秒で表記。)
+
+let t = 1000
+wait t
+let t = 20000
+wait t * 3
+
+#変数付き出力
+print `hello ${name}`
+
+#配列
+let nums = [1,2,3]
+
+#配列要素取得
+print nums[0]
+
+print nums
+(要素全体を,で区切って表示します。)
+
+#配列要素変更
+nums[1] = 100
+
+#配列追加
+let nums = [1,2]
+nums.push(3)
+
+#末尾削除
+let nums = [1,2,3]
+nums.pop()
+
+#要素数取得
+let nums = [1,2,3]
+print nums.length
+
+#配列ランダム
+let items = ["sword","shield","potion"]
+let id = random(0,2)
+print items[id]
+
+#全配列取り出し
+let items = ["剣","盾","薬"]
+foreach item in items{
+    print item
+}
+
+(計算,break,continueも対応しています。)
+
+#演算
+y = 5 + 2
+y = 5 - 3
+y = 5 * 4
+y = 20 / 5
+(変数同士の計算もできます。）
+
+let score = 100
+inc score
+(1増やす)
+inc score 5
+(5増やす)
+dec score
+(1減らす)
+dec score 5
+(5減らす)
+
+#比較演算
+x == y xとyが等しい
+x != y xとyが等しくない
+x > y xがyより大きい
+x < y yがxより小さい
+x >= y xがy以上
+x <= y xがy以下
+
+#論理演算
+AND a<0 && b<0
+OR a <0 || b <  0
+NOT !(a > 0)
+
+# 繰り返し
+repeat 5{
+    print name
+}
+(回数には変数を利用できます。)
+(break,continueが使えます。)
+
+#条件付き繰り返し
+let count = 5
+    
+repeat until count<=0{
+    print count
+    count = count -1
+}
+
+# 条件分岐
+if true {
+    print "YES"
+}
+
+eif false{
+    print"NO"
+}
+
+else{
+    print"ERROR"
+}
+(eifは何度でも重ねられます。)
+
+#スイッチ文
+switch level {
+    case 1:
+        print "Beginner"
+        break
+    
+    case 2:
+        print "Normal"
+        break
+    
+    case 3:
+        print "Hard"
+        break
+    
+    default:
+        print "Error"
+}
+
+#クリア
+clear
+(consoleをクリアします。)
+
+# 関数
+func hello() {
+    print "Hello"
+}
+
+#最後に実行
+func hello(){
+    defer{
+        print "終了"
+    }
+    print "hello"
+}
+
+#return
+func ad(a,b){
+    return a + b
+}
+
+let result = call add(10,200)
+
+#関数実行
+call hello()
+
+#引数付き関数
+func hello(name){
+    print name
+}
+
+#引数付き関数実行
+call hello("STar")
+
+#複数引数
+func hello(a,b){
+    print a + b
+}
+
+#複数関数実行
+call hello(a,b)
+    
+
+# while
+while hp > 0 {
+    print hp
+}
+    
+#クラス
+class player{
+    let name = "Novel Star"
+    let hp = 100
+}
+
+let p = new player()
+
+print p.name
+print p.hp
+
+p.hp = 50
+
+class player{
+    let name = "Novel Star"
+    let hp = 100
+
+    func show(){
+        print this.name
+        print this.hp
+    }
+}
+
+let p = new player()
+(引数でも使えます。)
+
+call p.show
+
+#コントラクタ
+class player{
+    let name = ""
+    let hp = 0
+
+    func constructor(name,hp){
+
+        this.name = name
+        this.hp = hp
+    }
+}
+
+let palyer = new player("Novel Star",100)
+
+#入力
+input name
+
+input name "名前を入力"
+
+input age "年齢を入力" = 15
+
+input user "ユーザー名" = "guest"
+
+input score "点数" = score
+
+input y "入力" = x + 5
+
+#スキップ
+break: 処理した場合{}内の処理を終了します。
+continue: 処理した場合{}内の処理をスキップします。
+
+let num = 1
+switch num{
+    case 1:
+        print num
+        break
+    case 2:
+        print num
+        break
+    deafult:
+        print "error"
+        break
+}
+    
+let nums = [1,2,3,4,5]
+
+foreach n in nums{
+    if n == 3{
+        continue
+    }
+    else{
+        print n
+    }
+
+    
+}
+
+#例外処理
+try{
+    print "開始"
+
+    import "test.star"
+
+    print "成功"
+}
+catch{
+    print "エラーが発生しました"
+}
+
+(try内でエラーが発生した場合、catch内が実行されます。)
+
+#エラー取得
+try{
+    import "config.star"
+}
+catch(err){
+    print err
+}
+
+(errにはエラーメッセージが入ります。)
+
+#キーボード
+if key("ArrowLeft"){
+    call moveLeft()
+}
+
+<kbd>←</kbd>:ArrowLeft
+<kbd>➝</kbd>:ArrowRight
+<kbd>↑</kbd>:ArrowUp
+<kbd>↓</kbd>:ArrowDown
+<kbd>スペース</kbd>:Space
+<kbd>Enter</kbd>:Enter
+文字は小文字
+数字対応
+
+#マウス
+マウス位置はmouseX,mouseYとして変数に保存される。
+
+if mouseDown("left"){
+    print "左クリック中"
+}
+
+if mouseDown("right"){
+    print "右クリック中"
+}
+
+if mouseDown("middle"){
+    print "中央ボタンクリック中"
+}
+(一度クリックされたことを取得するならmouseDownをmouseClickにする。)
+
+#canvas
+canvas create 800 500
+canvas size 1000 600
+(サイズ変更)
+canvas clear
+(消去)
+canvas show
+(表示)
+canvas hide
+(一時的に非表示)
+canvas destroy
+(完全に削除)
+canvas save
+(保存)
+canvas restore
+(saveした状態に戻す)
+canvas translate x y
+(canvasの原点を移動する)
+canvas rotate 90
+(回転する)
+※rotateはrestoreまでは影響する
+    
+<!--※0       = 0度
+　0.7854  = 45度
+　1.5708  = 90度
+　3.14159 = 180度
+　6.28318 = 360度
+-->
+#canvas 色
+canvas background "#000000"
+canvas color "#ffffff"
+(描画色を設定)
+canvas fill "#ff0000"
+(塗りつぶす色を設定)
+canvas stroke "#ffffff"
+(線の色を設定)
+
+#canvas 図形
+canvas lineWidth 5
+(線の太さの設定)
+canvas rect x y w h
+(四角形)
+canvas fillRect x y w h
+(四角形に塗りつぶす)
+canvas strokeRect x y w h
+(四角形の枠)
+canvas circle x y radius
+(円)
+canvas fillCircle
+(塗りつぶし円)
+canvas stroke "#ffffff"
+canvas polygon x1 y1 x2 y2 x3 y3 x4 y4 x5 y5
+(多角形)
+canvas fill "#00e5ff"
+canvas fillPolygon x1 y1 x2 y2 x3 y3 x4 y4 x5 y5
+(塗りつぶし多角形)
+canvas scale 2 2
+(2倍に拡大)
+canvas 0.5 0.5
+(半分に縮小)
+
+#canvas 線    
+canvas line x1 y1 x2 y2
+(線)
+canvas arc x1 y1 x2 y2 0 180
+
+※w=横幅,h=高さ
+
+#canvas 文字
+canvas fill "#ffffff"
+canvas text "Hello STar!" x y size
+(sizeのデフォルトは20)
+(変数も使えます。)
+
+#canvas アニメーション
+canvas animate frame {
+    canvas clear
+    canvas fill "#00e5ff"
+    canvass fillCircle 400 250 50
+}
+
+※変数が使えます。
+    
+(frameには30,60,120のいずれかが入り、デフォルトは60です。)
+※アニメーション中はframe,timeという変数ができ、frameはフレームごとに、timeは1msごとに増えていきます。
+※アニメーションは指定したフレームごとに{}内の処理を行うという構文です。
+
+canvas stop
+(アニメーションを停止させます。)
+
+object1 rotate 360 1s
+
+object1 fadein 1s
+object1 fadeout 1s
+
+#canvas object
+canvas object player{
+    position 200 500
+    shape rect
+
+    points x1 y1 x2 y2
+    
+    fill "#00e5ff"
+}
+
+canvas draw player
+
+objectに入るプロパティ
+    position: 座標
+    shape: 形{rect:長方形(pointsに左上と右下の座標),circle:円(sizeの代わりにradius,triangle:三角形(pointsに上、左、右の座標),polygon:多角形(pointsに好きな数の座標)}
+    visible: 描画されるかされないかでtrueかfalseをつける。
+    opacity: opacity 透明度で透明度を設定できる。1が最大
+    rotate: rotate 角度で回転を設定できる。
+    
+objectにできること
+    draw: canvas object drawで描画
+    distance: let d = オブジェクト1 distance オブジェクト2でオブジェクト1からオブジェクト2の中心座標の距離を取得
+    collision: let hit = オブジェクト1 collision オブジェクト2でオブジェクト1とオブジェクト2が重なっているかを調べ、trueかfalseを返す。
+
+#canvas 標準アニメーション
+object1 move 向き 距離
+(向きにはright,up,down,leftまたは角度が入ります。)
+
+※変数が使えます。
+※object property 値で再代入できます。
+
+#同期処理
+background {
+    print("hello")
+}
+
+※常に実行します
+
+#インポート
+import "config.star"
+(関数、定数などすべてがインポートされます。)
+
+#強制停止
+exit
+exit "Game Over"
+exit `${name}は倒れた。
+(exitを処理した場合、プログラム全体が止まります。)
+
+#コメントアウト
+#コメント
+</pre>
+<pre id="help-en" style="display:none;">
+STar Language v3.1.9
+
+Supported Features
+・Variables
+・Constants
+・Arrays
+・Functions
+・Conditionals
+・Loops
+・Input
+・Random
+・Clear
+・Exit
+・Time
+・Mouse and Keyboard
+・Exception Handling
+・Canvas
+・background
+・Classes
+・Import
+
+
+# Output
+print "Hello"
+(If the value is not enclosed in quotes, it is treated as a variable.)
+
+# Variables
+let name = "STar"
+(Without quotes, the value is treated as a number.)
+
+# Reassignment
+name = "star"
+(Without quotes, the value is treated as a number.)
+
+# Constants
+con name = "STar"
+(Without quotes, the value is treated as a number.)
+
+# String Concatenation
+let first = "STar"
+let last = "IDE"
+let title = first + " " + last
+
+let score = 100
+print "Score: " + score
+
+# Random
+let dice = random(1,6)
+print dice
+
+# Minimum / Maximum
+print min(10,20)
+print max(10,20)
+
+print min(nums)
+print max(nums)
+
+print max(nums) + 100
+
+# Sum
+let nums = [10,20,30,40]
+print sum(nums)
+
+# Average
+print avg(nums)
+
+# Delay
+wait 500
+(Values are specified in milliseconds.)
+
+let t = 1000
+wait t
+
+let t = 20000
+wait t * 3
+
+# Output with Variables
+print `hello ${name}`
+
+# Arrays
+let nums = [1,2,3]
+
+# Get an Array Element
+print nums[0]
+
+print nums
+(Elements are displayed separated by commas.)
+
+# Change an Array Element
+nums[1] = 100
+
+# Add to an Array
+let nums = [1,2]
+nums.push(3)
+
+# Remove the Last Element
+let nums = [1,2,3]
+nums.pop()
+
+# Get Array Length
+let nums = [1,2,3]
+print nums.length
+
+# Random Array Element
+let items = ["sword","shield","potion"]
+let id = random(0,2)
+print items[id]
+
+# Iterate Through an Array
+let items = ["sword","shield","potion"]
+
+foreach item in items{
+    print item
+}
+
+(Calculations, break, and continue are supported.)
+
+# Operators
+y = 5 + 2
+y = 5 - 3
+y = 5 * 4
+y = 20 / 5
+
+(Variables can be used in calculations.)
+
+let score = 100
+
+inc score
+(Increases by 1)
+
+inc score 5
+(Increases by 5)
+
+dec score
+(Decreases by 1)
+
+dec score 5
+(Decreases by 5)
+
+
+# Comparison Operators
+
+x == y
+x != y
+x > y
+x < y
+x >= y
+x <= y
+
+
+# Logical Operators
+
+AND a < 0 && b < 0
+
+OR a < 0 || b < 0
+
+NOT !(a > 0)
+
+
+# Repeat
+
+repeat 5{
+    print name
+}
+
+(Variables can be used for the repetition count.)
+(break and continue are supported.)
+
+
+# Conditional Repeat
+
+let count = 5
+
+repeat until count<=0{
+    print count
+    count = count -1
+}
+
+
+# Conditions
+
+if true {
+    print "YES"
+}
+
+eif false{
+    print "NO"
+}
+
+else{
+    print "ERROR"
+}
+
+(eif can be chained multiple times.)
+
+
+# Switch
+
+switch level {
+
+    case 1:
+        print "Beginner"
+        break
+
+    case 2:
+        print "Normal"
+        break
+
+    case 3:
+        print "Hard"
+        break
+
+    default:
+        print "Error"
+}
+
+
+# Clear
+
+clear
+
+(Clears the console.)
+
+
+# Functions
+
+func hello() {
+    print "Hello"
+}
+
+
+# Deferred Execution
+
+func hello(){
+
+    defer{
+        print "Finished"
+    }
+
+    print "hello"
+}
+
+
+# Return
+
+func add(a,b){
+    return a + b
+}
+
+let result = call add(10,200)
+
+
+# Function Execution
+
+call hello()
+
+
+# Function with Arguments
+
+func hello(name){
+    print name
+}
+
+call hello("STar")
+
+
+# Multiple Arguments
+
+func hello(a,b){
+    print a + b
+}
+
+call hello(a,b)
+
+
+# while
+
+while hp > 0 {
+    print hp
+}
+
+
+# Classes
+
+class player{
+
+    let name = "Novel Star"
+    let hp = 100
+}
+
+let p = new player()
+
+print p.name
+print p.hp
+
+p.hp = 50
+
+
+class player{
+
+    let name = "Novel Star"
+    let hp = 100
+
+    func show(){
+
+        print this.name
+        print this.hp
+    }
+}
+
+let p = new player()
+
+call p.show
+
+
+# Constructor
+
+class player{
+
+    let name = ""
+    let hp = 0
+
+    func constructor(name,hp){
+
+        this.name = name
+        this.hp = hp
+    }
+}
+
+let player = new player("Novel Star",100)
+
+#background
+background {
+    print ("hello")
+}
+※Always runnig
+
+# Input
+
+input name
+
+input name "Enter your name"
+
+input age "Enter your age" = 15
+
+input user "Username" = "guest"
+
+input score "Score" = score
+
+input y "Input" = x + 5
+
+
+# Break / Continue
+
+break: Ends the current block of processing.
+
+continue: Skips the remaining processing in the current block.
+
+
+# Exception Handling
+
+try{
+
+    print "Start"
+
+    import "test.star"
+
+    print "Success"
+}
+
+catch{
+
+    print "An error occurred"
+}
+
+
+(If an error occurs inside try, catch is executed.)
+
+
+# Get an Error
+
+try{
+
+    import "config.star"
+}
+
+catch(err){
+
+    print err
+}
+
+(err contains the error message.)
+
+
+# Keyboard
+
+if key("ArrowLeft"){
+    call moveLeft()
+}
+
+←: ArrowLeft
+➝: ArrowRight
+↑: ArrowUp
+↓: ArrowDown
+
+Space: Space
+Enter: Enter
+
+Letters are case-insensitive.
+Numbers are supported.
+
+
+# Mouse
+
+The mouse position is stored in mouseX and mouseY.
+
+if mouseDown("left"){
+    print "Left mouse button is held"
+}
+
+if mouseDown("right"){
+    print "Right mouse button is held"
+}
+
+if mouseDown("middle"){
+    print "Middle mouse button is held"
+}
+
+(To detect a single click, use mouseClick instead of mouseDown.)
+
+
+# Canvas
+
+canvas create 800 500
+
+canvas size 1000 600
+(Changes the size.)
+
+canvas clear
+(Clears the canvas.)
+
+canvas show
+(Shows the canvas.)
+
+canvas hide
+(Temporarily hides the canvas.)
+
+canvas destroy
+(Completely removes the canvas.)
+
+canvas save
+(Saves the current state.)
+
+canvas restore
+(Restores the saved state.)
+
+canvas translate x y
+(Moves the canvas origin.)
+
+canvas rotate 90
+(Rotates the canvas.)
+
+0 = 0 degrees
+0.7854 = 45 degrees
+1.5708 = 90 degrees
+3.14159 = 180 degrees
+6.28318 = 360 degrees
+
+
+# Canvas Colors
+
+canvas background "#000000"
+
+canvas color "#ffffff"
+(Sets the drawing color.)
+
+canvas fill "#ff0000"
+(Sets the fill color.)
+
+canvas stroke "#ffffff"
+(Sets the stroke color.)
+
+
+# Canvas Shapes
+
+canvas lineWidth 5
+(Sets the line width.)
+
+canvas rect x y w h
+(Rectangle)
+
+canvas fillRect x y w h
+(Filled rectangle)
+
+canvas strokeRect x y w h
+(Rectangle outline)
+
+canvas circle x y radius
+(Circle)
+
+canvas fillCircle
+(Filled circle)
+
+canvas polygon x1 y1 x2 y2 x3 y3 x4 y4 x5 y5
+(Polygon)
+
+canvas fill "#00e5ff"
+
+canvas fillPolygon x1 y1 x2 y2 x3 y3 x4 y4 x5 y5
+(Filled polygon)
+
+canvas scale 2 2
+(Zooms to 2x.)
+
+canvas 0.5 0.5
+(Zooms to half size.)
+
+
+# Canvas Lines
+
+canvas line x1 y1 x2 y2
+(Line)
+
+canvas arc x1 y1 x2 y2 0 180
+
+# Canvas Text
+
+canvas fill "#ffffff"
+
+canvas text "Hello STar!" x y size
+
+(The default size is 20.)
+
+(Variables can be used.)
+
+
+# Canvas Animation
+
+canvas animate frame {
+
+    canvas clear
+
+    canvas fill "#00e5ff"
+
+    canvas fillCircle 400 250 50
+}
+
+(Variables can be used.)
+
+(frame can be 30, 60, or 120. The default is 60.)
+
+(During animation, frame and time variables are available.)
+
+(frame increases every frame.)
+
+(time increases every 1ms.)
+
+(The block is executed at the specified frame rate.)
+
+
+canvas stop
+
+(Stops the animation.)
+
+# Canvas Object
+
+canvas object player{
+
+    position 200 500
+
+    shape rect
+
+    points x1 y1 x2 y2
+
+    fill "#00e5ff"
+}
+
+canvas draw player
+
+
+Object properties
+
+    position:
+        Coordinates
+
+    shape:
+        Shape
+
+        rect:
+            Rectangle
+
+        circle:
+            Circle
+
+        triangle:
+            Triangle
+
+        polygon:
+            Polygon
+
+    visible:
+        Whether the object is drawn.
+        Use true or false.
+
+    opacity:
+        Transparency.
+        1 is fully visible.
+
+    rotate:
+        Rotation angle.
+
+
+Object operations
+
+    draw:
+        Draw the object.
+
+        direction:
+        right
+        left
+        up
+        down
+        or an angle
+
+    distance:
+    　　let d = object1 distance object2
+        Gets the distance between
+        the centers of two objects.
+
+    collision:
+        let hit = object1 collision object2
+        Checks whether two objects
+        overlap and returns true or false.
+
+
+(Variables can be used.)
+
+(Object properties can be reassigned.)
+
+# Canvas Standard Animation
+
+object1 move direction distance
+
+(direction can be right, up, down, left, or an angle.)
+
+object1 rotate 360 1s
+
+object1 fadein 1s
+
+object1 fadeout 1s
+
+# Import
+
+import "config.star"
+
+(All functions, constants, and definitions are imported.)
+
+
+# Exit
+
+exit
+
+exit "Game Over"
+
+exit `${name} was defeated.`
+
+(When exit is processed,
+the entire program stops.)
+
+
+# Comments
+
+# comment
+</pre>
+
+
+    </div>
+
+</div>
+<div id="shortcutPanel">
+
+    <div id="shortcutHeader">
+        <h2>Keyboard Shortcuts</h2>
+
+        <button id="closeShortcut">
+            ✕
+        </button>
+    </div>
+
+    <div id="shortcutContent">
+
+        <!-- Search & Replace -->
+        <div class="shortcutSection">
+
+            <h3
+                data-ja="検索・置換"
+                data-en="Search & Replace"
+            >
+                検索・置換
+            </h3>
+
+            <div class="shortcutRow">
+                <span
+                    data-ja="検索"
+                    data-en="Search"
+                >
+                    検索
+                </span>
+
+                <kbd>Ctrl</kbd> + <kbd>F</kbd>
+            </div>
+
+            <div class="shortcutRow">
+                <span
+                    data-ja="置換"
+                    data-en="Replace"
+                >
+                    置換
+                </span>
+
+                <kbd>Ctrl</kbd> + <kbd>H</kbd>
+            </div>
+
+            <div class="shortcutRow">
+                <span
+                    data-ja="次の検索結果"
+                    data-en="Next Result"
+                >
+                    次の検索結果
+                </span>
+
+                <kbd>Enter</kbd>
+            </div>
+
+            <div class="shortcutRow">
+                <span
+                    data-ja="前の検索結果"
+                    data-en="Previous Result"
+                >
+                    前の検索結果
+                </span>
+
+                <kbd>Shift</kbd> + <kbd>Enter</kbd>
+            </div>
+
+            <div class="shortcutRow">
+                <span
+                    data-ja="パネルを閉じる"
+                    data-en="Close Panel"
+                >
+                    パネルを閉じる
+                </span>
+
+                <kbd>Esc</kbd>
+            </div>
+
+        </div>
+
+
+        <!-- File -->
+        <div class="shortcutSection">
+
+            <h3
+                data-ja="ファイル"
+                data-en="File"
+            >
+                ファイル
+            </h3>
+
+            <div class="shortcutRow">
+                <span
+                    data-ja="保存"
+                    data-en="Save"
+                >
+                    保存
+                </span>
+
+                <kbd>Ctrl</kbd> + <kbd>S</kbd>
+            </div>
+
+            <div class="shortcutRow">
+                <span
+                    data-ja="新規ファイル"
+                    data-en="New File"
+                >
+                    新規ファイル
+                </span>
+
+                <kbd>Ctrl</kbd> + <kbd>N</kbd>
+            </div>
+
+            <div class="shortcutRow">
+                <span
+                    data-ja="ファイルを閉じる"
+                    data-en="Close File"
+                >
+                    ファイルを閉じる
+                </span>
+
+                <kbd>Ctrl</kbd> + <kbd>W</kbd>
+            </div>
+
+        </div>
+
+
+        <!-- Run -->
+        <div class="shortcutSection">
+
+            <h3
+                data-ja="▶ 実行"
+                data-en="▶ Run"
+            >
+                ▶ 実行
+            </h3>
+
+            <div class="shortcutRow">
+
+                <span
+                    data-ja="プログラム実行"
+                    data-en="Run Program"
+                >
+                    プログラム実行
+                </span>
+
+                <kbd>F5</kbd>
+
+                <kbd>Ctrl</kbd> + <kbd>Enter</kbd>
+
+                <kbd>Cmd</kbd> + <kbd>Enter</kbd>
+
+            </div>
+
+        </div>
+
+
+        <!-- Edit -->
+        <div class="shortcutSection">
+
+            <h3
+                data-ja="編集"
+                data-en="Edit"
+            >
+                編集
+            </h3>
+
+            <div class="shortcutRow">
+
+                <span
+                    data-ja="元に戻す"
+                    data-en="Undo"
+                >
+                    元に戻す
+                </span>
+
+                <kbd>Ctrl</kbd> + <kbd>Z</kbd>
+
+            </div>
+
+            <div class="shortcutRow">
+
+                <span
+                    data-ja="やり直す"
+                    data-en="Redo"
+                >
+                    やり直す
+                </span>
+
+                <kbd>Ctrl</kbd> + <kbd>Y</kbd>
+
+            </div>
+
+            <div class="shortcutRow">
+
+                <span
+                    data-ja="コピー"
+                    data-en="Copy"
+                >
+                    コピー
+                </span>
+
+                <kbd>Ctrl</kbd> + <kbd>C</kbd>
+
+            </div>
+
+            <div class="shortcutRow">
+
+                <span
+                    data-ja="切り取り"
+                    data-en="Cut"
+                >
+                    切り取り
+                </span>
+
+                <kbd>Ctrl</kbd> + <kbd>X</kbd>
+
+            </div>
+
+            <div class="shortcutRow">
+
+                <span
+                    data-ja="貼り付け"
+                    data-en="Paste"
+                >
+                    貼り付け
+                </span>
+
+                <kbd>Ctrl</kbd> + <kbd>V</kbd>
+
+            </div>
+
+            <div class="shortcutRow">
+
+                <span
+                    data-ja="すべて選択"
+                    data-en="Select All"
+                >
+                    すべて選択
+                </span>
+
+                <kbd>Ctrl</kbd> + <kbd>A</kbd>
+
+            </div>
+
+            <div class="shortcutRow">
+
+                <span
+                    data-ja="コメント切り替え"
+                    data-en="Toggle Comment"
+                >
+                    コメント切り替え
+                </span>
+
+                <kbd>Ctrl</kbd> + <kbd>/</kbd>
+
+            </div>
+
+            <div class="shortcutRow">
+
+                <span
+                    data-ja="指定行へ移動"
+                    data-en="Go to Line"
+                >
+                    指定行へ移動
+                </span>
+
+                <kbd>Ctrl</kbd> + <kbd>G</kbd>
+
+            </div>
+
+        </div>
+
+
+        <!-- Line Operations -->
+        <div class="shortcutSection">
+
+            <h3
+                data-ja="行操作"
+                data-en="Line Operations"
+            >
+                行操作
+            </h3>
+
+            <div class="shortcutRow">
+
+                <span
+                    data-ja="行を削除"
+                    data-en="Delete Line"
+                >
+                    行を削除
+                </span>
+
+                <kbd>Ctrl</kbd> +
+                <kbd>Shift</kbd> +
+                <kbd>K</kbd>
+
+            </div>
+
+            <div class="shortcutRow">
+
+                <span
+                    data-ja="行を上へ移動"
+                    data-en="Move Line Up"
+                >
+                    行を上へ移動
+                </span>
+
+                <kbd>Alt</kbd> + <kbd>↑</kbd>
+
+            </div>
+
+            <div class="shortcutRow">
+
+                <span
+                    data-ja="行を下へ移動"
+                    data-en="Move Line Down"
+                >
+                    行を下へ移動
+                </span>
+
+                <kbd>Alt</kbd> + <kbd>↓</kbd>
+
+            </div>
+
+            <div class="shortcutRow">
+
+                <span
+                    data-ja="行を上へ複製"
+                    data-en="Duplicate Line Up"
+                >
+                    行を上へ複製
+                </span>
+
+                <kbd>Shift</kbd> +
+                <kbd>Alt</kbd> +
+                <kbd>↑</kbd>
+
+            </div>
+
+            <div class="shortcutRow">
+
+                <span
+                    data-ja="行を下へ複製"
+                    data-en="Duplicate Line Down"
+                >
+                    行を下へ複製
+                </span>
+
+                <kbd>Shift</kbd> +
+                <kbd>Alt</kbd> +
+                <kbd>↓</kbd>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+<!-- Monaco Loader -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.52.2/min/vs/loader.min.js"></script>
+
+<!-- STar -->
+<script src="star/lexer.js"></script>
+<script src="star/parser.js"></script>
+<script src="star/runtime.js"></script>
+<script src="star/compiler.js"></script>
+<script src="star/language.js"></script>
+
+<!-- IDE -->
+<script src="app.js"></script>
+
+</body>
+</html>

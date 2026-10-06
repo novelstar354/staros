@@ -16,6 +16,8 @@ html,body{
     font-family:"Segoe UI",Arial,sans-serif;
     background:#05070c;
     color:white;
+    user-select: none;
+  -webkit-user-select: none;
 }
 
 button,input{
@@ -1043,6 +1045,56 @@ body.staros-light .window-title{color:#172033}.body.staros-light{}
 #starRecoveryOverlay{position:fixed;inset:0;z-index:100000;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.72);backdrop-filter:blur(12px)}#starRecoveryOverlay.show{display:flex}.star-recovery-card{width:390px;max-width:calc(100vw - 30px);padding:26px;border-radius:20px;background:#101a2a;border:1px solid rgba(110,170,255,.35);box-shadow:0 25px 80px rgba(0,0,0,.5)}.star-recovery-card h2{margin:0 0 8px}.star-recovery-card p{font-size:12px;color:#9eb0cb}.star-recovery-card input{width:100%;box-sizing:border-box;padding:12px;border-radius:10px;border:1px solid #31425f;background:#080f1c;color:#fff}.star-recovery-actions{display:flex;gap:8px;margin-top:12px}.star-recovery-actions button{flex:1;padding:10px;border:0;border-radius:9px;cursor:pointer}.star-recovery-primary{background:#3d8bff;color:#fff}.star-recovery-error{min-height:18px;color:#ff7885;font-size:12px;margin-top:7px}
 
 </style>
+
+/* Star Apps Store - card action buttons */
+.star-store-card{
+    min-width:0;
+    min-height:190px;
+    display:flex;
+    flex-direction:column;
+    box-sizing:border-box;
+}
+.star-store-card-actions{
+    width:100%;
+    margin-top:auto;
+    padding-top:14px;
+    display:flex;
+    gap:16px;
+    box-sizing:border-box;
+}
+.star-store-card-actions .explorer-button{
+    flex:1 1 0;
+    min-width:0;
+    width:0;
+    height:34px;
+    padding:0 8px;
+    box-sizing:border-box;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    text-align:center;
+}
+.star-store-card-actions .store-launch{
+    border-color:rgba(205,176,82,.38);
+    background:rgba(190,160,65,.10);
+    color:#e4cf87;
+}
+.star-store-card-actions .store-launch:hover{
+    background:rgba(190,160,65,.18);
+}
+.star-store-card-actions .store-uninstall{
+    border-color:rgba(175,185,198,.30);
+    background:rgba(175,185,198,.07);
+    color:#cbd2dc;
+}
+.star-store-card-actions .store-uninstall:hover{
+    background:rgba(175,185,198,.14);
+}
+@media(max-width:560px){
+    .star-store-card-actions{flex-direction:column;}
+    .star-store-card-actions .explorer-button{width:100%;}
+}
+
 </head>
 
 <body>
@@ -1075,7 +1127,7 @@ body.staros-light .window-title{color:#172033}.body.staros-light{}
       <button onclick="closeStarRecovery()">キャンセル</button>
       <button class="star-recovery-primary" onclick="resetStarPassword()">再設定</button>
     </div>
-    <button onclick="factoryResetStarOS()" style="width:100%;margin-top:10px;padding:10px;border:1px solid #b54b5b;border-radius:9px;background:#35151b;color:#ff9da8;cursor:pointer">⚠️ StarOSを初期化</button><p style="margin-bottom:0">回復キー: <b>STAR-RECOVERY-2026</b></p>
+    <button onclick="factoryResetStarOS()" style="width:100%;margin-top:10px;padding:10px;border:1px solid #b54b5b;border-radius:9px;background:#35151b;color:#ff9da8;cursor:pointer">⚠️ StarOSを初期化</button>
   </div>
 </div>
 
@@ -1629,7 +1681,7 @@ document.addEventListener("DOMContentLoaded",()=>{
 /* =========================================================
    PASSWORD RECOVERY
 ========================================================= */
-function openStarRecovery(){const o=document.getElementById('starRecoveryOverlay');if(!o)return;o.classList.add('show');document.getElementById('starRecoveryKey').value='';document.getElementById('starRecoveryError').textContent='';setTimeout(()=>document.getElementById('starRecoveryKey')?.focus(),50)} function closeStarRecovery(){document.getElementById('starRecoveryOverlay')?.classList.remove('show')} async function resetStarPassword(){const key=document.getElementById('starRecoveryKey')?.value||'';const err=document.getElementById('starRecoveryError');if(key!=='STAR-RECOVERY-2026'){err.textContent='回復キーが違います。';return}const account=getAccount();if(!account){err.textContent='アカウントがありません。';return}const hash=await hashPassword('1234');localStorage.setItem(ACCOUNT_KEY,JSON.stringify({...account,passwordHash:hash,recoveredAt:new Date().toISOString()}));closeStarRecovery();document.getElementById('accountPassword').value='';document.getElementById('accountError').textContent='パスワードを「1234」に再設定しました。';showToast('パスワードを再設定しました');} function factoryResetStarOS(){const key=document.getElementById('starRecoveryKey')?.value||'';const err=document.getElementById('starRecoveryError');if(key!=='STAR-RECOVERY-2026'){err.textContent='初期化するには正しい回復キーを入力してください。';return}if(!confirm('StarOSを初期化します。アカウント、設定、ホーム画面、仮想ファイルシステムなどのStarOSデータが削除されます。\n\n本当に初期化しますか？'))return;Object.keys(localStorage).filter(k=>k.startsWith('staros_')||k.startsWith('star_')||k.startsWith('excelJS_')).forEach(k=>localStorage.removeItem(k));try{sessionStorage.clear()}catch(e){}location.reload();} document.addEventListener('keydown',e=>{if(e.key==='Escape')closeStarRecovery();if(e.key==='Enter'&&document.getElementById('starRecoveryOverlay')?.classList.contains('show'))resetStarPassword()});
+function openStarRecovery(){const o=document.getElementById('starRecoveryOverlay');if(!o)return;o.classList.add('show');document.getElementById('starRecoveryKey').value='';document.getElementById('starRecoveryError').textContent='';setTimeout(()=>document.getElementById('starRecoveryKey')?.focus(),50)} function closeStarRecovery(){document.getElementById('starRecoveryOverlay')?.classList.remove('show')} async function resetStarPassword(){const key=document.getElementById('starRecoveryKey')?.value||'';const err=document.getElementById('starRecoveryError');if(key!=='starkwsk'){err.textContent='回復キーが違います。';return}const account=getAccount();if(!account){err.textContent='アカウントがありません。';return}const hash=await hashPassword('1234');localStorage.setItem(ACCOUNT_KEY,JSON.stringify({...account,passwordHash:hash,recoveredAt:new Date().toISOString()}));closeStarRecovery();document.getElementById('accountPassword').value='';document.getElementById('accountError').textContent='パスワードを「1234」に再設定しました。';showToast('パスワードを再設定しました');} function factoryResetStarOS(){if(!confirm('StarOSを初期化します。アカウント、設定、ホーム画面、仮想ファイルシステムなどのStarOSデータが削除されます。\n\n本当に初期化しますか？'))return;Object.keys(localStorage).filter(k=>k.startsWith('staros_')||k.startsWith('star_')||k.startsWith('excelJS_')).forEach(k=>localStorage.removeItem(k));try{sessionStorage.clear()}catch(e){}location.reload();} document.addEventListener('keydown',e=>{if(e.key==='Escape')closeStarRecovery();if(e.key==='Enter'&&document.getElementById('starRecoveryOverlay')?.classList.contains('show'))resetStarPassword()});
 
 /* =========================================================
    CLOCK
@@ -5016,6 +5068,7 @@ function openBrowser(){
       <div class="star-browser-body">
         <div class="star-browser-home" data-homeview>
           <div style="font-size:14px;letter-spacing:3px;opacity:.7">STAR BROWSER</div><h1>Webを、もっとStarらしく。</h1>
+        <div style="font-size:14px;letter-spacing:3px;opacity:.7">Have a nice day</div><br>
           <input class="star-browser-search" data-search placeholder="URLまたは検索語句を入力">
           <div class="star-browser-shortcuts">
             <button data-shortcut="https://www.google.com">Google</button><button data-shortcut="https://www.youtube.com">YouTube</button><button data-shortcut="https://github.com">GitHub</button><button data-shortcut="https://novelstar354.github.io/starcorperation">Star</button>
@@ -5873,12 +5926,12 @@ function renderAppStore(win){
             </div>
             <div style="flex:1;padding:18px;overflow:auto">
                 <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px">
-                    ${apps.map(app=>`<div style="padding:17px;border:1px solid rgba(255,255,255,.09);border-radius:12px;background:rgba(255,255,255,.035)">
+                    ${apps.map(app=>`<div class="star-store-card" style="padding:17px;border:1px solid rgba(255,255,255,.09);border-radius:12px;background:rgba(255,255,255,.035)">
                         <div style="font-size:36px">${app.icon||"📄"}</div>
                         <div style="margin-top:9px;font-size:16px;font-weight:bold">${escapeHTML(app.name)}</div>
                         <div style="margin-top:5px;min-height:34px;color:#7f91ae;font-size:11px">${escapeHTML(app.description||"HTMLアプリ")}</div>
-                        <div style="display:flex;gap:6px;margin-top:13px">
-                            ${app.userApp?`<button class="explorer-button" data-open-html="${escapeHTML(app.id)}">▶ 起動</button>`:app.folder?(isStarAppInstalled(app.id)?`<button class="explorer-button" data-open-html="${escapeHTML(app.id)}">▶ 起動</button><button class="explorer-button" data-uninstall-built="${escapeHTML(app.id)}">アンインストール</button>`:`<button class="explorer-button" data-install-built="${escapeHTML(app.id)}">インストール</button>`):`<button class="explorer-button" data-open-html="${escapeHTML(app.id)}">▶ 起動</button>${app.userUploaded?`<button class="explorer-button" data-delete-html="${escapeHTML(app.id)}">削除</button>`:""}`}
+                        <div class="star-store-card-actions">
+                            ${app.userApp?`<button class="explorer-button store-launch" data-open-html="${escapeHTML(app.id)}">▶ 起動</button>`:app.folder?(isStarAppInstalled(app.id)?`<button class="explorer-button store-launch" data-open-html="${escapeHTML(app.id)}">▶ 起動</button><button class="explorer-button store-uninstall" data-uninstall-built="${escapeHTML(app.id)}">アンインストール</button>`:`<button class="explorer-button store-launch" data-install-built="${escapeHTML(app.id)}">インストール</button>`):`<button class="explorer-button store-launch" data-open-html="${escapeHTML(app.id)}">▶ 起動</button>${app.userUploaded?`<button class="explorer-button store-uninstall" data-delete-html="${escapeHTML(app.id)}">削除</button>`:""}`}
                         </div>
                     </div>`).join("")}
                 </div>

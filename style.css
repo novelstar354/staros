@@ -1,0 +1,520 @@
+/* =====================================================
+   WEB IDE
+   VSCode Inspired Theme
+   ===================================================== */
+
+:root{
+    --bg:#1e1e1e;
+    --panel:#252526;
+    --panel2:#2d2d30;
+    --border:#3c3c3c;
+    --text:#cccccc;
+    --accent:#0078d4;
+    --hover:#37373d;
+    --status:#007acc;
+}
+
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+}
+
+html,
+body{
+    width:100%;
+    height:100%;
+    overflow:hidden;
+    font-family:
+        "Segoe UI",
+        sans-serif;
+    background:var(--bg);
+    color:var(--text);
+    user-select: none;
+  -webkit-user-select: none;
+}
+
+/* =====================================================
+   TOP BAR
+   ===================================================== */
+
+#topbar{
+    height:48px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    background:var(--panel);
+    border-bottom:1px solid var(--border);
+    padding:0 10px;
+}
+
+.logo{
+    font-weight:bold;
+    font-size:14px;
+    color:white;
+}
+
+.toolbar{
+    display:flex;
+    gap:6px;
+    flex-wrap:wrap;
+}
+
+.toolbar button{
+    border:none;
+    outline:none;
+    background:var(--panel2);
+    color:white;
+    padding:6px 12px;
+    border-radius:4px;
+    cursor:pointer;
+    transition:.2s;
+}
+
+.toolbar button:hover{
+    background:var(--hover);
+}
+
+/* =====================================================
+   LAYOUT
+   ===================================================== */
+
+#container{
+    display:flex;
+    width:100%;
+    height:calc(100vh - 48px);
+}
+
+/* =====================================================
+   SIDEBAR
+   ===================================================== */
+
+#sidebar{
+    width:240px;
+    background:var(--panel);
+    border-right:1px solid var(--border);
+    overflow:auto;
+}
+
+.sidebar-title{
+    padding:12px;
+    font-size:12px;
+    font-weight:bold;
+    letter-spacing:1px;
+    border-bottom:1px solid var(--border);
+}
+
+#fileTree{
+    list-style:none;
+}
+
+#fileTree li{
+    padding:8px 12px;
+    cursor:pointer;
+    user-select:none;
+    transition:.15s;
+}
+
+#fileTree li:hover{
+    background:var(--hover);
+}
+
+#fileTree li.active{
+    background:var(--accent);
+    color:white;
+}
+
+/* =====================================================
+   CENTER
+   ===================================================== */
+
+#center{
+    flex:1;
+    display:flex;
+    flex-direction:column;
+    overflow:hidden;
+}
+
+/* =====================================================
+   TABS
+   ===================================================== */
+
+#tabs{
+    height:38px;
+    display:flex;
+    align-items:center;
+    overflow-x:auto;
+    background:var(--panel);
+    border-bottom:1px solid var(--border);
+}
+
+.tab{
+    display:flex;
+    align-items:center;
+    gap:8px;
+
+    min-width:120px;
+    height:100%;
+
+    padding:0 12px;
+
+    border-right:1px solid var(--border);
+
+    cursor:pointer;
+    white-space:nowrap;
+}
+
+.tab:hover{
+    background:var(--hover);
+}
+
+.tab.active{
+    background:var(--bg);
+}
+
+.tab-close{
+    font-size:12px;
+    opacity:.7;
+}
+
+.tab-close:hover{
+    opacity:1;
+}
+
+/* =====================================================
+   EDITOR
+   ===================================================== */
+
+#editor{
+    flex:1;
+    width:100%;
+    height:100%;
+}
+
+/* =====================================================
+   STATUS BAR
+   ===================================================== */
+
+#statusbar{
+    height:24px;
+
+    display:flex;
+    align-items:center;
+    gap:20px;
+
+    padding:0 12px;
+
+    background:var(--status);
+    color:white;
+
+    font-size:12px;
+}
+
+/* =====================================================
+   PREVIEW
+   ===================================================== */
+
+#previewPane{
+    width:45%;
+    min-width:300px;
+
+    display:none;
+    flex-direction:column;
+
+    background:white;
+
+    border-left:1px solid var(--border);
+}
+
+#previewPane.show{
+    display:flex;
+}
+
+.preview-header{
+    height:40px;
+
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+
+    padding:0 10px;
+
+    background:var(--panel);
+    color:white;
+
+    border-bottom:1px solid var(--border);
+}
+
+.preview-header button{
+    border:none;
+    background:none;
+    color:white;
+    font-size:20px;
+    cursor:pointer;
+}
+
+#previewFrame{
+    flex:1;
+    width:100%;
+    border:none;
+    background:white;
+}
+
+/* =====================================================
+   MODALS
+   ===================================================== */
+
+.modal{
+    position:fixed;
+    inset:0;
+
+    display:flex;
+    justify-content:center;
+    align-items:center;
+
+    background:rgba(0,0,0,.5);
+
+    z-index:999;
+}
+
+.hidden{
+    display:none;
+}
+
+.modal-content{
+    width:360px;
+    background:var(--panel);
+
+    border:1px solid var(--border);
+
+    border-radius:8px;
+
+    padding:20px;
+
+    display:flex;
+    flex-direction:column;
+    gap:12px;
+}
+
+.modal-content h2{
+    font-size:18px;
+}
+
+.modal-content input{
+    width:100%;
+
+    padding:10px;
+
+    border:none;
+
+    background:#1a1a1a;
+
+    color:white;
+
+    border-radius:4px;
+}
+
+.modal-buttons{
+    display:flex;
+    justify-content:flex-end;
+    gap:8px;
+}
+
+.modal-buttons button{
+    border:none;
+
+    background:var(--accent);
+
+    color:white;
+
+    padding:8px 14px;
+
+    border-radius:4px;
+
+    cursor:pointer;
+}
+
+.modal-buttons button:hover{
+    opacity:.9;
+}
+
+/* =====================================================
+   LOADING
+   ===================================================== */
+
+#loadingScreen{
+    position:fixed;
+    inset:0;
+
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    align-items:center;
+
+    background:#1e1e1e;
+
+    z-index:99999;
+}
+
+.loader{
+    width:60px;
+    height:60px;
+
+    border:5px solid #444;
+    border-top:5px solid var(--accent);
+
+    border-radius:50%;
+
+    animation:spin 1s linear infinite;
+}
+
+#loadingScreen p{
+    margin-top:20px;
+    color:white;
+}
+
+@keyframes spin{
+    from{
+        transform:rotate(0deg);
+    }
+    to{
+        transform:rotate(360deg);
+    }
+}
+
+/* =====================================================
+   SCROLLBAR
+   ===================================================== */
+
+::-webkit-scrollbar{
+    width:10px;
+    height:10px;
+}
+
+::-webkit-scrollbar-track{
+    background:#1e1e1e;
+}
+
+::-webkit-scrollbar-thumb{
+    background:#555;
+}
+
+::-webkit-scrollbar-thumb:hover{
+    background:#777;
+}
+
+/* =====================================================
+   LIGHT THEME
+   ===================================================== */
+
+body.light{
+
+    --bg:#ffffff;
+    --panel:#f3f3f3;
+    --panel2:#e7e7e7;
+    --border:#d0d0d0;
+    --text:#222;
+    --hover:#dddddd;
+    --status:#0078d4;
+}
+
+/* =====================================================
+   RESPONSIVE
+   ===================================================== */
+
+@media (max-width:900px){
+
+    #sidebar{
+        width:180px;
+    }
+
+    #previewPane{
+        width:50%;
+    }
+}
+
+@media (max-width:700px){
+
+    #sidebar{
+        display:none;
+    }
+
+    #previewPane{
+        position:fixed;
+        inset:0;
+        width:100%;
+        z-index:1000;
+    }
+
+    .toolbar{
+        overflow-x:auto;
+    }
+
+    .toolbar button{
+        flex-shrink:0;
+    }
+}
+/* ===================================
+   SEARCH BAR
+   =================================== */
+
+.search-bar{
+
+    height:42px;
+
+    display:flex;
+    align-items:center;
+
+    gap:8px;
+
+    padding:0 10px;
+
+    background:#252526;
+
+    border-bottom:1px solid #3c3c3c;
+}
+
+.search-bar.hidden{
+    display:none;
+}
+
+.search-bar input{
+
+    width:200px;
+
+    padding:6px 10px;
+
+    background:#1e1e1e;
+
+    border:1px solid #444;
+
+    color:white;
+
+    border-radius:4px;
+}
+
+
+
+.search-bar button{
+
+    padding:6px 12px;
+
+    border:none;
+
+    cursor:pointer;
+}
+.searchHighlight{
+    background:yellow;
+}
+.searchHighlight{
+    background: rgba(255,255,0,.4);
+    border-radius: 3px;
+}
+.searchHighlight{
+    background: yellow;
+    color: black;
+}
+
+.hidden{
+    display:none;
+}

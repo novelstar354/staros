@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Star IDE</title>
+
+<link rel="manifest" href="manifest.json">
+<link rel="stylesheet" href="style.css">
+<link rel="icon" href="ide.png">
+<meta name="theme-color" content="#1e1e1e">
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.52.2/min/vs/loader.min.js"></script>
+</head>
+
+<body>
+
+<!-- TOPBAR -->
+<header id="topbar">
+
+    <div class="logo">
+        Star IDE
+    </div>
+
+    <div class="toolbar">
+
+        <button id="runBtn">▶ Run</button>
+
+        <button id="newFileBtn">
+            新規
+        </button>
+
+        <button id="openFileBtn">
+            開く
+        </button>
+
+        <button id="saveFileBtn">
+            保存
+        </button>
+
+        <button id="searchBtn">
+            検索、置換
+        </button>
+
+        <button id="themeBtn">
+            テーマ
+        </button>
+
+        <button id="previewBtn">
+            プレビュー
+        </button>
+
+        <button id="fullscreenBtn">
+            全画面
+        </button>
+
+    </div>
+
+</header>
+
+<!-- FILE INPUT -->
+
+<input
+type="file"
+id="fileInput"
+multiple
+hidden>
+
+<!-- SEARCH BAR -->
+
+<div
+id="searchBar"
+class="search-bar hidden">
+
+    <input
+    type="text"
+    id="searchInput"
+    placeholder="検索">
+
+    <input
+    type="text"
+    id="replaceInput"
+    placeholder="置換">
+
+    <button id="replaceOneBtn">
+        置換
+    </button>
+
+    <button id="replaceAllBtn">
+        全置換
+    </button>
+
+    <button id="closeSearchBar">
+        ✕
+    </button>
+
+</div>
+
+<!-- MAIN LAYOUT -->
+
+<div id="container">
+
+    <!-- SIDEBAR -->
+
+    <aside id="sidebar">
+
+        <div class="sidebar-title">
+            EXPLORER
+        </div>
+
+        <ul id="fileTree"></ul>
+
+    </aside>
+
+    <!-- CENTER -->
+
+    <main id="center">
+
+        <!-- TABS -->
+
+        <div id="tabs"></div>
+
+        <!-- EDITOR -->
+
+        <div id="editor"></div>
+
+        <!-- STATUS -->
+
+        <div id="statusbar">
+
+            <span id="fileName">
+                No File
+            </span>
+
+            <span id="language">
+                TXT
+            </span>
+
+            <span id="position">
+                Ln 1, Col 1
+            </span>
+
+            <span id="charCount">
+                0 chars
+            </span>
+
+        </div>
+
+    </main>
+
+    <!-- PREVIEW -->
+
+    <aside id="previewPane">
+
+        <div class="preview-header">
+
+            <span>
+                Preview
+            </span>
+
+            <button id="closePreview">
+                ×
+            </button>
+
+        </div>
+
+        <iframe
+        id="previewFrame">
+        </iframe>
+
+    </aside>
+
+</div>
+
+<!-- LOADING -->
+
+<div id="loadingScreen">
+
+    <div class="loader"></div>
+
+    <p>
+        Loading Star Editor...
+    </p>
+
+</div>
+
+<script src="app.js"></script>
+
+</body>
+</html>

@@ -1036,6 +1036,11 @@ button,input{
 }
 
 /* =========================
+   STAZON
+========================= */
+.stazon-app{height:100%;display:flex;flex-direction:column;background:linear-gradient(180deg,#090e17,#060a11);color:#eaf2ff;overflow:hidden}.stazon-top{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:16px 18px;border-bottom:1px solid #202c40;background:linear-gradient(135deg,#101a2d,#090e18)}.stazon-brand{display:flex;align-items:center;gap:10px}.stazon-logo{width:38px;height:38px;border-radius:11px;display:grid;place-items:center;background:linear-gradient(145deg,#e9edf4,#8f9caf);color:#111827;font-size:21px;font-weight:900}.stazon-title{font-size:20px;font-weight:800;letter-spacing:1px}.stazon-sub{font-size:10px;color:#8295b4;margin-top:2px;letter-spacing:1px}.stazon-balance{padding:9px 13px;border:1px solid rgba(175,190,215,.2);border-radius:11px;background:rgba(255,255,255,.045);white-space:nowrap}.stazon-balance-label{font-size:10px;color:#8da0bd}.stazon-balance-value{font-size:17px;font-weight:800;color:#f0f3f8;margin-top:2px}.stazon-body{flex:1;min-height:0;display:flex;flex-direction:column}.stazon-toolbar{display:flex;align-items:center;gap:8px;padding:12px 16px;border-bottom:1px solid #1b2739}.stazon-tab{border:1px solid #2a3951;background:#101827;color:#cbd8eb;border-radius:9px;padding:8px 13px;cursor:pointer}.stazon-tab:hover,.stazon-tab.active{background:#1a2639;border-color:#53627a;color:#fff}.stazon-content{flex:1;overflow:auto;padding:18px}.stazon-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(205px,1fr));gap:13px}.stazon-card{border:1px solid rgba(160,180,210,.12);border-radius:13px;background:rgba(255,255,255,.035);padding:15px;display:flex;flex-direction:column;min-height:205px}.stazon-card:hover{border-color:rgba(180,195,220,.25);background:rgba(255,255,255,.05)}.stazon-product-icon{font-size:42px;height:55px;display:flex;align-items:center}.stazon-product-name{font-size:15px;font-weight:750;margin-top:7px}.stazon-product-desc{font-size:11px;color:#8192ad;line-height:1.5;min-height:34px;margin-top:5px}.stazon-price{font-size:17px;font-weight:800;margin-top:12px;color:#e7ebf2}.stazon-buy{margin-top:auto;width:100%;border:1px solid #53627a;background:#172235;color:#fff;border-radius:9px;padding:9px;cursor:pointer;font-weight:700}.stazon-buy:hover{background:#223149}.stazon-buy:disabled{opacity:.45;cursor:not-allowed}.stazon-history{display:flex;flex-direction:column;gap:9px}.stazon-history-item{display:flex;justify-content:space-between;gap:12px;align-items:center;padding:12px 14px;border:1px solid rgba(160,180,210,.12);border-radius:10px;background:rgba(255,255,255,.035)}.stazon-empty{padding:40px;text-align:center;color:#8192ad}.stazon-notice{font-size:11px;color:#7386a4;margin:0 0 14px}.stazon-sell-form{max-width:650px;padding:18px;border:1px solid rgba(160,180,210,.12);border-radius:13px;background:rgba(255,255,255,.035)}.stazon-sell-title{font-size:18px;font-weight:800;margin-bottom:5px}.stazon-field{width:100%;margin-top:9px;padding:10px 12px;border:1px solid #2a3951;border-radius:9px;background:#0b1220;color:#fff;outline:none}.stazon-textarea{min-height:90px;resize:vertical;font-family:inherit}.stazon-sell-button{margin-top:10px;border:1px solid #53627a;background:#172235;color:#fff;border-radius:9px;padding:10px 16px;cursor:pointer;font-weight:700}.stazon-sell-button:hover{background:#223149}.stazon-section-title{font-size:15px;margin:22px 0 10px}.stazon-seller{font-size:10px;color:#7386a4;margin-top:8px}@media(max-width:700px){.stazon-grid{grid-template-columns:repeat(auto-fill,minmax(160px,1fr))}.stazon-content{padding:12px}}
+
+/* =========================
    MOBILE
 ========================= */
 
@@ -1205,6 +1210,17 @@ body.staros-light .window-title{color:#172033}.body.staros-light{}
 }
 
 </style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+window.STAROS_SUPABASE_URL="https://ftmsywsapyxoakiezhjl.supabase.co";
+window.STAROS_SUPABASE_PUBLISHABLE_KEY="sb_publishable_0rswfUUX0fN26G1Z7uWe9Q_aeCAaeS9";
+window.stazonSupabase=(window.supabase&&window.supabase.createClient)
+  ? window.supabase.createClient(
+      window.STAROS_SUPABASE_URL,
+      window.STAROS_SUPABASE_PUBLISHABLE_KEY
+    )
+  : null;
+</script>
 </head>
 
 <body>
@@ -1286,6 +1302,7 @@ body.staros-light .window-title{color:#172033}.body.staros-light{}
       <button onclick="addStarDesktopApp('explorer','📁','Star Explorer')">📁 エクスプローラーを追加</button>
       <button onclick="addStarDesktopApp('terminal','💻','Star Terminal')">💻 ターミナルを追加</button>
       <button onclick="addStarDesktopApp('settings','⚙️','Star Settings')">⚙️ 設定を追加</button>
+      <button onclick="addStarDesktopApp('stazon','★','Stazon')">★ Stazonを追加</button>
       <button onclick="addStarDesktopFilePrompt()">📄 ファイルを追加</button>
       <button onclick="addStarDesktopTrash()">🗑️ ゴミ箱を追加</button>
     </div>
@@ -1340,6 +1357,10 @@ body.staros-light .window-title{color:#172033}.body.staros-light{}
             onclick="launchInstalledStarApp('staride')">
         <span class="app-icon">💻</span>
         <span class="app-name">Star IDE</span>
+    </button>
+
+    <button class="start-app" onclick="openStazon();closeStartMenu()">
+        <span class="app-icon">★</span><span class="app-name">Stazon</span>
     </button>
 
     <button class="start-app"
@@ -2006,7 +2027,7 @@ function ensureStarHomeDefaults(){
   const defaults=[
     ['explorer','📁','Star Explorer'],['terminal','💻','Star Terminal'],['settings','⚙️','Star Settings'],
     ['browser','🌐','Star Browser'],['calculator','🧮','Calculator'],['texteditor','📝','Text Editor'],
-    ['appstore','🛒','Star Apps Store'],['trash','🗑️','ゴミ箱']
+    ['appstore','🛒','Star Apps Store'],['stazon','★','Stazon'],['trash','🗑️','ゴミ箱']
   ];
   let items=starDesktopLoad(), changed=false;
 
@@ -2076,6 +2097,7 @@ function starDesktopOpenItem(item){
     else if(item.app==='calculator')openCalculator();
     else if(item.app==='texteditor')openTextEditor();
     else if(item.app==='appstore')openAppStore();
+    else if(item.app==='stazon')openStazon();
     else if(item.app==='about')openAbout();
     else if(item.app==='star'||item.app==='staride')launchInstalledStarApp(item.app);
     else if(item.app && (item.app.startsWith('userapp_') || getStoreApp(item.app)?.userApp)){
@@ -3001,6 +3023,7 @@ function setupStarStartAppDrag(){
       ["launchInstalledStarApp('star')",'star','⭐','STar'],
       ["launchInstalledStarApp('staride')",'staride','💻','Star IDE'],
       ['openAppStore','appstore','🛒','Star Apps Store'],
+      ['openStazon','stazon','★','Stazon'],
       ['openTerminal','terminal','💻','Star Terminal'],
       ['openSettings','settings','⚙️','Star Settings'],
       ['openAbout','about','★','About StarOS'],
@@ -6277,7 +6300,9 @@ function saveStoreApps(apps){
     localStorage.setItem(STAR_STORE_KEY,JSON.stringify(apps));
 }
 function getAllStoreApps(){
-    return [...BUILTIN_HTML_APPS,...loadStoreApps(),...getUserApps()];
+    const apps=[...BUILTIN_HTML_APPS,...loadStoreApps(),...getUserApps()];
+    if(!apps.some(a=>a.id==="stazon")) apps.unshift({id:"stazon",name:"Stazon",shortName:"Stazon",icon:"★",description:"StarCoinで買い物できるStarOS公式マーケット",stazon:true});
+    return apps;
 }
 function getStoreApp(id){
     return getAllStoreApps().find(a=>a.id===id)||null;
@@ -6347,7 +6372,7 @@ function renderAppStore(win){
                         <div style="margin-top:9px;font-size:16px;font-weight:bold">${escapeHTML(app.name)}</div>
                         <div style="margin-top:5px;min-height:34px;color:#7f91ae;font-size:11px">${escapeHTML(app.description||"HTMLアプリ")}</div>
                         <div class="star-store-card-actions">
-                            ${app.userApp?`<button class="explorer-button store-launch" data-open-html="${escapeHTML(app.id)}">▶ 起動</button>`:app.folder?(isStarAppInstalled(app.id)?`<button class="explorer-button store-launch" data-open-html="${escapeHTML(app.id)}">▶ 起動</button><button class="explorer-button store-uninstall" data-uninstall-built="${escapeHTML(app.id)}">アンインストール</button>`:`<button class="explorer-button store-launch" data-install-built="${escapeHTML(app.id)}">インストール</button>`):`<button class="explorer-button store-launch" data-open-html="${escapeHTML(app.id)}">▶ 起動</button>${app.userUploaded?`<button class="explorer-button store-uninstall" data-delete-html="${escapeHTML(app.id)}">削除</button>`:""}`}
+                            ${app.stazon?`<button class="explorer-button store-launch" data-open-html="${escapeHTML(app.id)}">▶ 起動</button>`:app.userApp?`<button class="explorer-button store-launch" data-open-html="${escapeHTML(app.id)}">▶ 起動</button>`:app.folder?(isStarAppInstalled(app.id)?`<button class="explorer-button store-launch" data-open-html="${escapeHTML(app.id)}">▶ 起動</button><button class="explorer-button store-uninstall" data-uninstall-built="${escapeHTML(app.id)}">アンインストール</button>`:`<button class="explorer-button store-launch" data-install-built="${escapeHTML(app.id)}">インストール</button>`):`<button class="explorer-button store-launch" data-open-html="${escapeHTML(app.id)}">▶ 起動</button>${app.userUploaded?`<button class="explorer-button store-uninstall" data-delete-html="${escapeHTML(app.id)}">削除</button>`:""}`}
                         </div>
                     </div>`).join("")}
                 </div>
@@ -6370,11 +6395,527 @@ function renderAppStore(win){
         renderAppStore(win);
         renderUserStartApps();
     };
-    content.querySelectorAll("[data-open-html]").forEach(btn=>btn.onclick=()=>{const app=getStoreApp(btn.dataset.openHtml);if(!app)return;if(app.userApp||app.virtualFolder)openHtmlApp(app);else if(app.folder)launchInstalledStarApp(app.id);else openHtmlApp(app);});
+    content.querySelectorAll("[data-open-html]").forEach(btn=>btn.onclick=()=>{const app=getStoreApp(btn.dataset.openHtml);if(!app)return;if(app.stazon){openStazon();return;}if(app.userApp||app.virtualFolder)openHtmlApp(app);else if(app.folder)launchInstalledStarApp(app.id);else openHtmlApp(app);});
     content.querySelectorAll("[data-install-built]").forEach(btn=>btn.onclick=()=>{installStarStoreApp(btn.dataset.installBuilt);renderAppStore(win);});
     content.querySelectorAll("[data-uninstall-built]").forEach(btn=>btn.onclick=()=>{uninstallStarStoreApp(btn.dataset.uninstallBuilt);renderAppStore(win);});
     content.querySelectorAll("[data-delete-html]").forEach(btn=>btn.onclick=()=>{saveStoreApps(loadStoreApps().filter(a=>a.id!==btn.dataset.deleteHtml));showToast("アプリを削除しました");renderAppStore(win);});
 }
+
+/* =========================================================
+   STAZON
+========================================================= */
+const STAZON_PURCHASES_KEY="stazonPurchases_v1";
+const STAZON_LISTINGS_KEY="stazonListings_v1";
+const STAZON_INVENTORY_KEY="stazonInventory_v1";
+const STAZON_BALANCES_KEY="stazonBalances_v1";
+const STAZON_PRODUCTS=[
+{id:"starpad",icon:"▣",name:"StarPad Mini",desc:"StarOS向けの小型デジタルノート。",price:1200},
+{id:"starcase",icon:"◇",name:"Star Case",desc:"星マーク入りのシンプルなケース。",price:850},
+{id:"starpen",icon:"✎",name:"Star Pen",desc:"書きやすさより星らしさを優先したペン。",price:300},
+{id:"starmug",icon:"☕",name:"Star Mug",desc:"Star Corporation公式マグカップ。",price:680},
+{id:"starbadge",icon:"★",name:"Star Badge",desc:"StarOSユーザー向けメタルバッジ。",price:500},
+{id:"nothingbox",icon:"□",name:"NOTHING Box",desc:"何も入っていない箱。もちろん何もありません。",price:100},
+{id:"uselessmanual",icon:"▤",name:"役に立たないマニュアル",desc:"読むほど役に立たなくなる公式冊子。",price:240},
+{id:"staroswallpaper",icon:"✦",name:"StarOS Wallpaper Pack",desc:"StarOS用の星空壁紙セット。",price:900}
+];
+function stazonCurrentUser(){
+ const account=typeof getAccount==="function"?getAccount():null;
+ const accountName=account?.username;
+ const settingName=typeof settings!=="undefined"?settings?.username:null;
+ return accountName||settingName||"Star User";
+}
+
+/* =========================================================
+   STAZON / SUPABASE CLOUD
+   StarOSの既存アカウント名を共有マーケットのユーザーIDとして使用
+========================================================= */
+
+async function stazonCloudSyncBalance(){
+    if(!window.stazonSupabase) return {ok:false,error:"Supabaseが接続されていません"};
+
+    const user=stazonCurrentUser();
+
+    try{
+        const {data,error}=await window.stazonSupabase
+            .from("stazon_balances")
+            .select("username,balance")
+            .eq("username",user)
+            .maybeSingle();
+
+        if(error) throw error;
+
+        /* 初回だけ、現在のStarOSのstarCoinsをクラウド残高へ移行 */
+        if(!data){
+            const local=Number(localStorage.getItem("starCoins"));
+            const initial=Number.isFinite(local)&&local>=0?Math.floor(local):0;
+
+            const {error:insertError}=await window.stazonSupabase
+                .from("stazon_balances")
+                .insert({username:user,balance:initial});
+
+            if(insertError){
+                /* 同時作成などで既に存在した場合は再取得 */
+                const retry=await window.stazonSupabase
+                    .from("stazon_balances")
+                    .select("balance")
+                    .eq("username",user)
+                    .maybeSingle();
+
+                if(retry.error) throw retry.error;
+                const value=Number(retry.data?.balance ?? initial);
+                stazonSetCoins(value);
+                return {ok:true,balance:value};
+            }
+
+            stazonSetCoins(initial);
+            return {ok:true,balance:initial};
+        }
+
+        const value=Math.max(0,Math.floor(Number(data.balance)||0));
+        stazonSetCoins(value);
+        return {ok:true,balance:value};
+
+    }catch(e){
+        console.error("Stazon balance sync failed:",e);
+        return {ok:false,error:"StarCoin残高の同期に失敗しました"};
+    }
+}
+
+async function stazonCloudSyncListings(win,page){
+    if(!window.stazonSupabase) return {ok:false,error:"Supabaseが接続されていません"};
+
+    try{
+        const {data,error}=await window.stazonSupabase
+            .from("stazon_listings")
+            .select("id,name,description,price,icon,seller,created_at,sold,buyer,sold_at")
+            .order("created_at",{ascending:false});
+
+        if(error) throw error;
+
+        const listings=(data||[]).map(x=>({
+            id:x.id,
+            name:x.name,
+            desc:x.description||"",
+            price:Number(x.price)||0,
+            icon:x.icon||"★",
+            seller:x.seller,
+            time:x.created_at?Date.parse(x.created_at):Date.now(),
+            sold:!!x.sold,
+            buyer:x.buyer||null,
+            soldAt:x.sold_at?Date.parse(x.sold_at):null
+        }));
+
+        stazonSaveListings(listings);
+
+        if(win){
+            renderStazon(win,page||"shop");
+        }
+
+        return {ok:true,listings};
+    }catch(e){
+        console.error("Stazon listings sync failed:",e);
+        showToast("Stazonの出品情報を取得できませんでした");
+        return {ok:false,error:"出品情報の取得に失敗しました"};
+    }
+}
+
+async function stazonCloudCreateListing(item){
+    if(!window.stazonSupabase) return true;
+
+    try{
+        const {error}=await window.stazonSupabase
+            .from("stazon_listings")
+            .insert({
+                id:item.id,
+                name:item.name,
+                description:item.desc||"",
+                price:item.price,
+                icon:item.icon||"★",
+                seller:item.seller,
+                sold:false
+            });
+
+        if(error) throw error;
+        return true;
+    }catch(e){
+        console.error("Stazon listing create failed:",e);
+        showToast("出品の保存に失敗しました");
+        return false;
+    }
+}
+
+async function stazonCloudDeleteListing(id){
+    if(!window.stazonSupabase) return true;
+
+    try{
+        const me=stazonCurrentUser();
+
+        const {error}=await window.stazonSupabase
+            .from("stazon_listings")
+            .delete()
+            .eq("id",id)
+            .eq("seller",me)
+            .eq("sold",false);
+
+        if(error) throw error;
+        return true;
+    }catch(e){
+        console.error("Stazon listing delete failed:",e);
+        showToast("出品の取り下げに失敗しました");
+        return false;
+    }
+}
+
+async function stazonCloudBuyListing(id){
+    if(!window.stazonSupabase) return {ok:false,error:"Supabaseが接続されていません"};
+
+    try{
+        const buyer=stazonCurrentUser();
+
+        /*
+         * DB関数側で
+         * 1. 商品をロック
+         * 2. 購入者の残高確認
+         * 3. 購入者 - 商品価格
+         * 4. 出品者 + 商品価格
+         * 5. 商品を売却済みに変更
+         * 6. 所有商品を追加
+         * 7. 購入履歴を追加
+         * を一括処理します。
+         */
+        const {data,error}=await window.stazonSupabase
+            .rpc("buy_stazon_listing",{
+                p_listing_id:id,
+                p_buyer:buyer
+            });
+
+        if(error) throw error;
+
+        if(!data || data.ok!==true){
+            return {
+                ok:false,
+                error:data?.error||"購入に失敗しました"
+            };
+        }
+
+        return {ok:true};
+
+    }catch(e){
+        console.error("Stazon purchase failed:",e);
+        return {ok:false,error:"購入処理に失敗しました"};
+    }
+}
+
+async function stazonCloudSyncInventory(){
+    if(!window.stazonSupabase) return;
+
+    try{
+        const {data,error}=await window.stazonSupabase
+            .from("stazon_inventory")
+            .select("id,owner,listing_id,name,description,price,icon,seller,created_at")
+            .eq("owner",stazonCurrentUser())
+            .order("created_at",{ascending:false});
+
+        if(error) throw error;
+
+        const cloud=(data||[]).map(x=>({
+            id:x.id,
+            listingId:x.listing_id,
+            name:x.name,
+            desc:x.description||"",
+            price:Number(x.price)||0,
+            icon:x.icon||"★",
+            owner:x.owner,
+            seller:x.seller,
+            time:x.created_at?Date.parse(x.created_at):Date.now()
+        }));
+
+        stazonSaveInventory(cloud);
+        return {ok:true,inventory:cloud};
+
+    }catch(e){
+        console.error("Stazon inventory sync failed:",e);
+        return {ok:false};
+    }
+}
+
+async function stazonCloudSyncPurchases(){
+    if(!window.stazonSupabase) return;
+
+    try{
+        const {data,error}=await window.stazonSupabase
+            .from("stazon_purchases")
+            .select("id,buyer,listing_id,name,price,icon,seller,created_at")
+            .eq("buyer",stazonCurrentUser())
+            .order("created_at",{ascending:false});
+
+        if(error) throw error;
+
+        const history=(data||[]).map(x=>({
+            id:x.listing_id||x.id,
+            name:x.name,
+            price:Number(x.price)||0,
+            icon:x.icon||"★",
+            time:x.created_at?Date.parse(x.created_at):Date.now(),
+            seller:x.seller
+        }));
+
+        stazonSavePurchases(history);
+        return {ok:true,purchases:history};
+
+    }catch(e){
+        console.error("Stazon purchase history sync failed:",e);
+        return {ok:false};
+    }
+}
+
+function stazonGetBalances(){try{const a=JSON.parse(localStorage.getItem(STAZON_BALANCES_KEY)||"{}");return a&&typeof a==="object"&&!Array.isArray(a)?a:{};}catch(e){return{};}}
+function stazonSaveBalances(a){localStorage.setItem(STAZON_BALANCES_KEY,JSON.stringify(a));}
+function stazonGetCoins(){
+ const me=stazonCurrentUser(),balances=stazonGetBalances();
+ if(!Object.prototype.hasOwnProperty.call(balances,me)){
+   const n=Number(localStorage.getItem("starCoins"));
+   balances[me]=Number.isFinite(n)&&n>=0?Math.floor(n):0;
+   stazonSaveBalances(balances);
+ }
+ const n=Number(balances[me]);
+ const coins=Number.isFinite(n)&&n>=0?Math.floor(n):0;
+ if(String(localStorage.getItem("starCoins"))!==String(coins)) localStorage.setItem("starCoins",String(coins));
+ return coins;
+}
+function stazonSetCoins(n){
+ const me=stazonCurrentUser(),coins=Math.max(0,Math.floor(Number(n)||0)),balances=stazonGetBalances();
+ balances[me]=coins;
+ stazonSaveBalances(balances);
+ localStorage.setItem("starCoins",String(coins));
+ window.dispatchEvent(new StorageEvent("storage",{key:"starCoins",newValue:String(coins)}));
+}
+function stazonAddCoins(user,amount){
+ if(!user)return 0;
+ const balances=stazonGetBalances(),old=Number(balances[user]);
+ const base=Number.isFinite(old)&&old>=0?Math.floor(old):0;
+ const add=Math.max(0,Math.floor(Number(amount)||0));
+ balances[user]=base+add;
+ stazonSaveBalances(balances);
+ return balances[user];
+}
+function stazonGetPurchases(){try{return JSON.parse(localStorage.getItem(STAZON_PURCHASES_KEY)||"[]")}catch(e){return[]}}
+function stazonSavePurchases(a){localStorage.setItem(STAZON_PURCHASES_KEY,JSON.stringify(a))}
+function stazonGetInventory(){try{const a=JSON.parse(localStorage.getItem(STAZON_INVENTORY_KEY)||"[]");return Array.isArray(a)?a:[]}catch(e){return[]}}
+function stazonSaveInventory(a){localStorage.setItem(STAZON_INVENTORY_KEY,JSON.stringify(a))}
+function stazonGetListings(){try{const a=JSON.parse(localStorage.getItem(STAZON_LISTINGS_KEY)||"[]");return Array.isArray(a)?a:[]}catch(e){return[]}}
+function stazonSaveListings(a){localStorage.setItem(STAZON_LISTINGS_KEY,JSON.stringify(a))}
+function stazonFormat(n){return Number(n).toLocaleString("ja-JP")+" StarCoin"}
+function stazonBuy(win,id){
+ const p=STAZON_PRODUCTS.find(x=>x.id===id);if(!p)return;
+ const coins=stazonGetCoins();if(coins<p.price){showToast("StarCoinが足りません");return}
+ if(!confirm(p.name+"を"+stazonFormat(p.price)+"で購入しますか？"))return;
+ stazonSetCoins(coins-p.price);
+ const inv=stazonGetInventory();inv.unshift({id:"official_"+Date.now()+"_"+Math.random().toString(36).slice(2,7),productId:p.id,name:p.name,desc:p.desc,price:p.price,icon:p.icon,owner:stazonCurrentUser(),seller:"StarOS公式",time:Date.now()});stazonSaveInventory(inv);
+ const h=stazonGetPurchases();h.unshift({id:p.id,name:p.name,price:p.price,icon:p.icon,time:Date.now(),seller:"StarOS公式"});stazonSavePurchases(h);
+ showToast(p.name+"を購入しました");renderStazon(win,"inventory")
+}
+async function stazonBuyListing(win,id){
+ const list=stazonGetListings(),item=list.find(x=>x.id===id);if(!item||item.sold)return;
+ const me=stazonCurrentUser();if(item.seller===me){showToast("自分の出品は購入できません");return}
+ const coins=stazonGetCoins();if(coins<item.price){showToast("StarCoinが足りません");return}
+ if(!confirm(item.name+"を"+stazonFormat(item.price)+"で購入しますか？\n出品者: "+item.seller))return;
+ if(window.stazonSupabase){
+   const result=await stazonCloudBuyListing(id);
+   if(!result.ok){showToast(result.error||"購入に失敗しました");return;}
+   await stazonCloudSyncBalance();
+   await stazonCloudSyncListings(null);
+   await stazonCloudSyncInventory();
+   await stazonCloudSyncPurchases();
+   showToast(item.name+"を購入しました");
+   renderStazon(win,"inventory");
+   return;
+ }
+ stazonSetCoins(coins-item.price);stazonAddCoins(item.seller,item.price);item.sold=true;item.buyer=me;item.soldAt=Date.now();stazonSaveListings(list);
+ const inv=stazonGetInventory();inv.unshift({id:"owned_"+Date.now()+"_"+Math.random().toString(36).slice(2,8),listingId:item.id,name:item.name,desc:item.desc,price:item.price,icon:item.icon||"★",owner:me,seller:item.seller,time:Date.now()});stazonSaveInventory(inv);
+ const h=stazonGetPurchases();h.unshift({id:item.id,name:item.name,price:item.price,icon:item.icon||"★",time:Date.now(),seller:item.seller});stazonSavePurchases(h);
+ showToast(item.name+"を購入しました");renderStazon(win,"inventory")
+}
+async function stazonCreateListing(win){
+ const name=win.querySelector("#stazonSellName")?.value.trim();
+ const desc=win.querySelector("#stazonSellDesc")?.value.trim()||"Stazonユーザーの出品商品";
+ const price=Math.floor(Number(win.querySelector("#stazonSellPrice")?.value));
+ const icon=win.querySelector("#stazonSellIcon")?.value.trim()||"★";
+ if(!name){showToast("商品名を入力してください");return}
+ if(!Number.isFinite(price)||price<1){showToast("価格は1 StarCoin以上にしてください");return}
+ if(price>999999999){showToast("価格が高すぎます");return}
+ const item={id:"listing_"+Date.now()+"_"+Math.random().toString(36).slice(2,8),name,desc,price,icon,seller:stazonCurrentUser(),time:Date.now(),sold:false};
+ if(window.stazonSupabase){const ok=await stazonCloudCreateListing(item);if(!ok)return;}
+ const listings=stazonGetListings();listings.unshift(item);stazonSaveListings(listings);showToast("商品を出品しました");renderStazon(win,"sell");
+ if(window.stazonSupabase)await stazonCloudSyncListings(win,"sell");
+}
+async function stazonDeleteListing(win,id){
+ const me=stazonCurrentUser();const listings=stazonGetListings();const item=listings.find(x=>x.id===id);
+ if(!item||item.seller!==me||item.sold)return;
+ if(window.stazonSupabase){const ok=await stazonCloudDeleteListing(id);if(!ok)return;}
+ stazonSaveListings(listings.filter(x=>x.id!==id));showToast("出品を取り下げました");renderStazon(win,"sell");
+}
+function renderStazon(win,page="shop"){
+ const content=win.querySelector(".window-content"),coins=stazonGetCoins(),history=stazonGetPurchases(),inventory=stazonGetInventory().filter(x=>x.owner===stazonCurrentUser()),listings=stazonGetListings(),me=stazonCurrentUser();
+
+ content.innerHTML=`<div class="stazon-app">
+   <div class="stazon-top">
+     <div class="stazon-brand">
+       <div class="stazon-logo">★</div>
+       <div>
+         <div class="stazon-title">Stazon</div>
+         <div class="stazon-sub">STAROS ONLINE MARKET</div>
+       </div>
+     </div>
+     <div class="stazon-balance">
+       <div class="stazon-balance-label">残高</div>
+       <div class="stazon-balance-value">${stazonFormat(coins)}</div>
+     </div>
+   </div>
+   <div class="stazon-body">
+     <div class="stazon-toolbar">
+       <button class="stazon-tab ${page==="shop"?'active':''}" data-stazon-page="shop">ショップ</button>
+       <button class="stazon-tab ${page==="market"?'active':''}" data-stazon-page="market">みんなの出品</button>
+       <button class="stazon-tab ${page==="sell"?'active':''}" data-stazon-page="sell">出品する</button>
+       <button class="stazon-tab ${page==="inventory"?'active':''}" data-stazon-page="inventory">購入品</button>
+       <button class="stazon-tab ${page==="history"?'active':''}" data-stazon-page="history">購入履歴</button>
+     </div>
+     <div class="stazon-content"></div>
+   </div>
+ </div>`;
+
+ const area=content.querySelector(".stazon-content");
+
+ if(page==="history"){
+   area.innerHTML=history.length
+     ? `<div class="stazon-history">${history.map(x=>`
+         <div class="stazon-history-item">
+           <div>
+             <span style="font-size:25px;margin-right:9px">${escapeHTML(x.icon||"★")}</span>
+             <b>${escapeHTML(x.name)}</b>
+             <div style="font-size:10px;color:#7487a3;margin-top:3px">
+               ${new Date(x.time).toLocaleString("ja-JP")} · 出品者: ${escapeHTML(x.seller||"StarOS公式")}
+             </div>
+           </div>
+           <b>-${stazonFormat(x.price)}</b>
+         </div>
+       `).join("")}</div>`
+     : `<div class="stazon-empty">まだ購入履歴はありません。</div>`;
+
+ }else if(page==="inventory"){
+   area.innerHTML=inventory.length
+     ? `<p class="stazon-notice">購入した商品です。ここからいつでも確認できます。</p><div class="stazon-grid">${inventory.map(p=>`
+         <div class="stazon-card">
+           <div class="stazon-product-icon">${escapeHTML(p.icon||"★")}</div>
+           <div class="stazon-product-name">${escapeHTML(p.name)}</div>
+           <div class="stazon-product-desc">${escapeHTML(p.desc||"")}</div>
+           <div class="stazon-seller">出品者: ${escapeHTML(p.seller||"StarOS公式")}</div>
+           <div class="stazon-price">購入価格: ${stazonFormat(p.price)}</div>
+           <div style="font-size:11px;color:#8293aa;margin-top:8px">所有者: ${escapeHTML(p.owner||me)}</div>
+         </div>
+       `).join("")}</div>`
+     : `<div class="stazon-empty">まだ購入した商品はありません。</div>`;
+
+ }else if(page==="sell"){
+   const mine=listings.filter(x=>x.seller===me&&!x.sold);
+   const soldMine=listings.filter(x=>x.seller===me&&x.sold);
+   const mineHtml=mine.length
+     ? `<div class="stazon-grid">${mine.map(p=>`
+         <div class="stazon-card">
+           <div class="stazon-product-icon">${escapeHTML(p.icon||"★")}</div>
+           <div class="stazon-product-name">${escapeHTML(p.name)}</div>
+           <div class="stazon-product-desc">${escapeHTML(p.desc)}</div>
+           <div class="stazon-price">${stazonFormat(p.price)}</div>
+           <button class="stazon-buy" data-stazon-delete="${p.id}">出品を取り下げる</button>
+         </div>
+       `).join("")}</div>`
+     : `<div class="stazon-empty">まだ出品していません。</div>`;
+   const soldHtml=soldMine.length
+     ? `<div class="stazon-grid">${soldMine.map(p=>`
+         <div class="stazon-card" style="opacity:.72">
+           <div class="stazon-product-icon">${escapeHTML(p.icon||"★")}</div>
+           <div class="stazon-product-name">${escapeHTML(p.name)}</div>
+           <div class="stazon-product-desc">${escapeHTML(p.desc)}</div>
+           <div class="stazon-seller">購入者: ${escapeHTML(p.buyer||"不明")}</div>
+           <div class="stazon-price">売上: +${stazonFormat(p.price)}</div>
+         </div>
+       `).join("")}</div>`
+     : `<div class="stazon-empty">まだ販売済みの商品はありません。</div>`;
+
+   area.innerHTML=`
+     <div class="stazon-sell-form">
+       <div class="stazon-sell-title">商品を出品</div>
+       <p class="stazon-notice">自分で設定した商品をStazonに公開できます。購入されると代金のStarCoinがあなたの残高に入ります。</p>
+       <input id="stazonSellName" class="stazon-field" placeholder="商品名">
+       <input id="stazonSellIcon" class="stazon-field" maxlength="2" placeholder="アイコン（例: ★）">
+       <input id="stazonSellPrice" class="stazon-field" type="number" min="1" placeholder="価格（StarCoin）">
+       <textarea id="stazonSellDesc" class="stazon-field stazon-textarea" placeholder="商品の説明"></textarea>
+       <button class="stazon-sell-button" id="stazonCreateSell">出品する</button>
+     </div>
+     <h3 class="stazon-section-title">自分の出品</h3>
+     ${mineHtml}
+     <h3 class="stazon-section-title">販売済み</h3>
+     ${soldHtml}
+   `;
+
+ }else if(page==="market"){
+   const active=listings.filter(x=>!x.sold&&x.seller!==me);
+   area.innerHTML=`
+     <p class="stazon-notice">他のユーザーが出品した商品です。購入すると、あなたのStarCoinが出品者へ移り、商品が「購入品」に追加されます。</p>
+     ${active.length?`<div class="stazon-grid">${active.map(p=>`
+       <div class="stazon-card">
+         <div class="stazon-product-icon">${escapeHTML(p.icon||"★")}</div>
+         <div class="stazon-product-name">${escapeHTML(p.name)}</div>
+         <div class="stazon-product-desc">${escapeHTML(p.desc)}</div>
+         <div class="stazon-seller">出品者: ${escapeHTML(p.seller)}</div>
+         <div class="stazon-price">${stazonFormat(p.price)}</div>
+         <button class="stazon-buy" data-stazon-listing="${p.id}" ${coins<p.price?'disabled':''}>購入する</button>
+       </div>
+     `).join("")}</div>`:`<div class="stazon-empty">現在、他のユーザーが出品している商品はありません。</div>`}
+   `;
+
+ }else{
+   area.innerHTML=`
+     <p class="stazon-notice">StarOS共通のStarCoinで購入できます。公式商品を表示しています。購入した商品は「購入品」に追加されます。</p>
+     <div class="stazon-grid">
+       ${STAZON_PRODUCTS.map(p=>`
+         <div class="stazon-card">
+           <div class="stazon-product-icon">${escapeHTML(p.icon)}</div>
+           <div class="stazon-product-name">${escapeHTML(p.name)}</div>
+           <div class="stazon-product-desc">${escapeHTML(p.desc)}</div>
+           <div class="stazon-price">${stazonFormat(p.price)}</div>
+           <button class="stazon-buy" data-stazon-buy="${p.id}" ${coins<p.price?'disabled':''}>購入する</button>
+         </div>
+       `).join("")}
+     </div>
+   `;
+ }
+
+ content.querySelectorAll("[data-stazon-page]").forEach(b=>{b.onclick=()=>renderStazon(win,b.dataset.stazonPage);});
+ content.querySelectorAll("[data-stazon-buy]").forEach(b=>{b.onclick=()=>stazonBuy(win,b.dataset.stazonBuy);});
+ content.querySelectorAll("[data-stazon-listing]").forEach(b=>{b.onclick=()=>stazonBuyListing(win,b.dataset.stazonListing);});
+ content.querySelectorAll("[data-stazon-delete]").forEach(b=>{b.onclick=()=>stazonDeleteListing(win,b.dataset.stazonDelete);});
+ content.querySelector("#stazonCreateSell")?.addEventListener("click",()=>{stazonCreateListing(win);});
+}
+async function openStazon(){
+    const win=openAppWindow("Stazon","★","stazon-window");
+    win.style.width="900px";
+    win.style.height="620px";
+    win.dataset.starDesktop=String(starCurrentDesktop);
+
+    renderStazon(win,"shop");
+
+    if(window.stazonSupabase){
+        await stazonCloudSyncBalance();
+        await stazonCloudSyncListings(null);
+        await stazonCloudSyncInventory();
+        await stazonCloudSyncPurchases();
+        renderStazon(win,"shop");
+    }
+
+    return win;
+}
+window.addEventListener("storage",e=>{if(!["starCoins",STAZON_BALANCES_KEY,STAZON_LISTINGS_KEY,STAZON_INVENTORY_KEY].includes(e.key))return;document.querySelectorAll(".stazon-window").forEach(w=>{const active=w.querySelector(".stazon-tab.active")?.dataset.stazonPage||"shop";renderStazon(w,active);});});
 
 /* =========================================================
    DYNAMIC TASKBAR

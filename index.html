@@ -1109,6 +1109,9 @@ button,input{
 .account-button:hover{filter:brightness(1.08)}
 .account-error{min-height:18px;margin-top:10px;color:#ff7b88;font-size:12px;text-align:center}
 .account-user{margin-top:15px;text-align:center;color:#7187aa;font-size:11px}
+.account-switch{display:flex;gap:7px;margin-top:10px}
+.account-switch button{flex:1;padding:9px;border:1px solid #304665;border-radius:9px;background:rgba(255,255,255,.035);color:#cbd8eb;cursor:pointer}
+.account-switch button:hover{background:rgba(101,169,255,.10)}
 
 
 /* =========================================================
@@ -1230,28 +1233,36 @@ window.stazonSupabase=(window.supabase&&window.supabase.createClient)
         <div class="account-logo">★</div>
         <div class="account-title">STAROS</div>
         <div class="account-sub" id="accountModeText">ACCOUNT SETUP</div>
-        <label class="account-label">アカウント名</label>
-        <input id="accountUsername" class="account-input" autocomplete="username" placeholder="例: Star User">
+        <label class="account-label" id="accountUsernameLabel">User ID</label>
+        <input id="accountUsername" class="account-input" autocomplete="username" placeholder="例: star_user">
+        <label class="account-label" id="accountDisplayNameLabel">Display Name</label>
+        <input id="accountDisplayName" class="account-input" autocomplete="nickname" placeholder="例: Star User">
         <label class="account-label">パスワード</label>
         <input id="accountPassword" class="account-input" type="password" autocomplete="new-password" placeholder="パスワードを入力">
         <label class="account-label" id="accountPasswordConfirmLabel">パスワード（確認）</label>
         <input id="accountPasswordConfirm" class="account-input" type="password" autocomplete="new-password" placeholder="もう一度入力">
         <button id="accountSubmit" class="account-button">アカウントを作成</button>
+        <button type="button" id="accountLoginButton" class="account-button" style="margin-top:8px;background:transparent;border:1px solid #304665" onclick="startStarLogin()">既存のアカウントでログイン</button>
         <button type="button" id="accountRecoveryButton" class="account-button" style="margin-top:8px;background:transparent;border:1px solid #304665" onclick="openStarRecovery()">パスワードを忘れた場合</button>
         <div id="accountError" class="account-error"></div>
         <div class="account-user" id="accountUserInfo"></div>
+        <div class="account-switch">
+            <button type="button" id="accountSwitchButton" onclick="showAccountSwitcher()">アカウントを切り替える</button>
+            <button type="button" id="accountNewButton" onclick="startNewStarAccount()">新しいアカウント</button>
+        </div>
+        <div id="accountSwitcher" style="display:none;margin-top:12px"></div>
     </div>
 </div>
 
 <div id="starRecoveryOverlay">
   <div class="star-recovery-card">
-    <h2>パスワードの再設定</h2>
-    <p>StarOSの回復キーを入力すると、パスワードを初期状態に戻せます。</p>
-    <input id="starRecoveryKey" type="password" placeholder="回復キー" autocomplete="off">
+    <h2 id="starRecoveryTitle">パスワードの再設定</h2>
+    <p id="starRecoveryDescription">User ID方式ではメールアドレスを登録しないため、メールによるパスワード再設定は使用できません。</p>
+    <input id="starRecoveryNewPassword" type="password" placeholder="新しいパスワード" autocomplete="new-password" style="display:none;margin-top:8px">
     <div id="starRecoveryError" class="star-recovery-error"></div>
     <div class="star-recovery-actions">
       <button onclick="closeStarRecovery()">キャンセル</button>
-      <button class="star-recovery-primary" onclick="resetStarPassword()">再設定</button>
+      <button class="star-recovery-primary" onclick="resetStarPassword()">送信</button>
     </div>
     <button onclick="factoryResetStarOS()" style="width:100%;margin-top:10px;padding:10px;border:1px solid #b54b5b;border-radius:9px;background:#35151b;color:#ff9da8;cursor:pointer">⚠️ StarOSを初期化</button>
   </div>
@@ -1500,63 +1511,187 @@ const FILE_SYSTEM_KEY =
 const SETTINGS_KEY =
     "staros_settings_v1";
 
-const ACCOUNT_KEY = "staros_account_v1";
+const ACCOUNT_KEY = "staros_account_v2";
 let starosLoggedIn = false;
-
-async function hashPassword(password){
-    const data=new TextEncoder().encode(password);
-    const hash=await crypto.subtle.digest("SHA-256",data);
-    return [...new Uint8Array(hash)].map(b=>b.toString(16).padStart(2,"0")).join("");
-}
+let starosAuthReady = false;
+let starosAccountMode = "login";
+let starosAuthUser = null;
 
 function getAccount(){
     try{return JSON.parse(localStorage.getItem(ACCOUNT_KEY)||"null");}catch(e){return null;}
 }
 
+const STAROS_ACCOUNTS_KEY="staros_accounts_v1";
+function getSavedStarAccounts(){
+    try{return JSON.parse(localStorage.getItem(STAROS_ACCOUNTS_KEY)||"[]");}catch(e){return [];}
+}
+function saveSavedStarAccounts(list){
+    localStorage.setItem(STAROS_ACCOUNTS_KEY,JSON.stringify(list.slice(0,12)));
+}
+function rememberStarAccount(account){
+    if(!account?.username)return;
+    const list=getSavedStarAccounts().filter(a=>a.username!==account.username);
+    list.unshift({username:account.username,displayName:account.displayName||account.username,userId:account.userId||null});
+    saveSavedStarAccounts(list);
+}
+function saveAccountCache(account){
+    if(account){localStorage.setItem(ACCOUNT_KEY,JSON.stringify(account));rememberStarAccount(account);}
+    else localStorage.removeItem(ACCOUNT_KEY);
+}
+
+async function starosRegisterAccount(username,displayName,password){
+    const {data,error}=await window.stazonSupabase.rpc("staros_register_account",{
+        p_username:username,
+        p_display_name:displayName,
+        p_password:password
+    });
+    if(error) return {ok:false,error};
+    return {ok:true,data};
+}
+
+async function starosLoginAccount(username,password){
+    const {data,error}=await window.stazonSupabase.rpc("staros_login_account",{
+        p_username:username,
+        p_password:password
+    });
+    if(error) return {ok:false,error};
+    return {ok:!!data?.success,data};
+}
+
 function showAccountScreen(mode){
     const screen=document.getElementById("accountScreen");
-    const hasAccount=!!getAccount();
+    if(!screen)return;
+    const account=getAccount();
+    const list=getSavedStarAccounts();
+    const hasAccount=!!account;
     screen.style.display="flex";
     document.getElementById("accountModeText").textContent=hasAccount?"SIGN IN":"ACCOUNT SETUP";
     document.getElementById("accountSubmit").textContent=hasAccount?"ログイン":"アカウントを作成";
     document.getElementById("accountPasswordConfirm").style.display=hasAccount?"none":"block";
     document.getElementById("accountPasswordConfirmLabel").style.display=hasAccount?"none":"block";
-    document.getElementById("accountPassword").autocomplete=hasAccount?"current-password":"new-password";
+    document.getElementById("accountDisplayName").style.display=hasAccount?"none":"block";
+    document.getElementById("accountDisplayNameLabel").style.display=hasAccount?"none":"block";
+    document.getElementById("accountUsername").value=hasAccount?(account.username||""):"";
+    document.getElementById("accountDisplayName").value=hasAccount?(account.displayName||account.username||""):"";
     document.getElementById("accountPassword").value="";
     document.getElementById("accountPasswordConfirm").value="";
     document.getElementById("accountError").textContent="";
-    document.getElementById("accountUsername").value=hasAccount?getAccount().username:"";
-    document.getElementById("accountUserInfo").textContent=hasAccount?"このStarOSのアカウントでログインしてください":"初回起動です。アカウントを作成してください";
-    setTimeout(()=>document.getElementById("accountUsername").focus(),50);
+    document.getElementById("accountUserInfo").textContent=hasAccount?`${account.displayName||account.username} でログインします`:(list.length?"保存されているアカウントを選択できます":"初回起動です。アカウントを作成してください");
+    document.getElementById("accountSwitchButton").style.display=(hasAccount||list.length)?"block":"none";
+    document.getElementById("accountNewButton").style.display=hasAccount?"block":"none";
+    renderAccountSwitcher();
+    setTimeout(()=>document.getElementById("accountPassword")?.focus(),50);
+}
+
+function renderAccountSwitcher(){
+    const box=document.getElementById("accountSwitcher"); if(!box)return;
+    const list=getSavedStarAccounts(); const current=getAccount()?.username;
+    box.innerHTML=list.length?`<div style="color:#8298bb;font-size:11px;margin-bottom:7px">保存済みアカウント</div>`+list.map(a=>`<button type="button" data-switch-user="${escapeHTML(a.username)}" style="display:flex;width:100%;align-items:center;gap:10px;padding:10px;margin:5px 0;border:1px solid rgba(255,255,255,.09);border-radius:9px;background:${a.username===current?'rgba(101,169,255,.12)':'rgba(255,255,255,.035)'};color:#fff;cursor:pointer;text-align:left"><span style="font-size:20px">★</span><span style="min-width:0"><b style="display:block;font-size:12px">${escapeHTML(a.displayName||a.username)}</b><small style="display:block;color:#7187aa;margin-top:2px">@${escapeHTML(a.username)}</small></span></button>`).join(""):"";
+    box.querySelectorAll("[data-switch-user]").forEach(btn=>btn.onclick=()=>switchStarAccount(btn.dataset.switchUser));
+}
+function showAccountSwitcher(){
+    const box=document.getElementById("accountSwitcher"); if(!box)return;
+    box.style.display=box.style.display==="none"?"block":"none";
+    if(box.style.display==="block")renderAccountSwitcher();
+}
+function startNewStarAccount(){
+    saveAccountCache(null);
+    document.getElementById("accountModeText").textContent="ACCOUNT SETUP";
+    document.getElementById("accountSubmit").textContent="アカウントを作成";
+    document.getElementById("accountUsername").value="";
+    document.getElementById("accountDisplayName").value="";
+    document.getElementById("accountPassword").value="";
+    document.getElementById("accountPasswordConfirm").value="";
+    document.getElementById("accountPasswordConfirm").style.display="block";
+    document.getElementById("accountPasswordConfirmLabel").style.display="block";
+    document.getElementById("accountDisplayName").style.display="block";
+    document.getElementById("accountDisplayNameLabel").style.display="block";
+    document.getElementById("accountError").textContent="";
+    document.getElementById("accountUserInfo").textContent="新しいStarOSアカウントを作成します";
+    document.getElementById("accountSwitcher").style.display="none";
+    setTimeout(()=>document.getElementById("accountUsername")?.focus(),50);
+}
+
+async function switchStarAccount(username){
+    const saved=getSavedStarAccounts().find(a=>a.username===username);
+    if(!saved)return;
+    saveAccountCache({username:saved.username,displayName:saved.displayName||saved.username,userId:saved.userId||null});
+    showAccountScreen("login");
+    showToast(`${saved.displayName||saved.username} を選択しました`);
+}
+
+async function loadStarosProfile(user){
+    if(!user)return null;
+    if(window.stazonSupabase){
+        const {data,error}=await window.stazonSupabase.from("staros_profiles").select("id,username,display_name,created_at").eq("username",getAccount()?.username||"").maybeSingle();
+        if(!error&&data)return data;
+    }
+    const a=getAccount();
+    return a?{id:a.userId,username:a.username,display_name:a.displayName,created_at:a.createdAt||new Date().toISOString()}:null;
+}
+
+async function enterStarOS(user,profile){
+    starosAuthUser=user||null;
+    starosLoggedIn=!!profile;
+    if(profile){
+        saveAccountCache({username:profile.username,displayName:profile.display_name||profile.username,userId:profile.id||user?.id||null,createdAt:profile.created_at||new Date().toISOString()});
+        if(typeof settings!=="undefined"){
+            settings.username=profile.display_name||profile.username;
+            localStorage.setItem(SETTINGS_KEY,JSON.stringify(settings));
+        }
+    }
+    document.getElementById("accountScreen").style.display="none";
+    document.getElementById("desktop").style.display="block";
+    if(typeof applySettings==="function")applySettings();
 }
 
 async function submitAccount(){
     const username=document.getElementById("accountUsername").value.trim();
+    const displayName=document.getElementById("accountDisplayName").value.trim();
     const password=document.getElementById("accountPassword").value;
     const confirm=document.getElementById("accountPasswordConfirm").value;
     const error=document.getElementById("accountError");
     const existing=getAccount();
-    if(!username){error.textContent="アカウント名を入力してください";return;}
-    if(password.length<4){error.textContent="パスワードは4文字以上にしてください";return;}
-    if(!existing && password!==confirm){error.textContent="パスワードが一致しません";return;}
-    const passwordHash=await hashPassword(password);
-    if(existing){
-        if(existing.username!==username || existing.passwordHash!==passwordHash){error.textContent="アカウント名またはパスワードが違います";return;}
-    }else{
-        localStorage.setItem(ACCOUNT_KEY,JSON.stringify({username,passwordHash,createdAt:new Date().toISOString()}));
-        settings.username=username;
-        localStorage.setItem(SETTINGS_KEY,JSON.stringify(settings));
+    error.textContent="";
+
+    if(!window.stazonSupabase){error.textContent="Supabaseに接続できません。";return;}
+    if(!username){error.textContent="User IDを入力してください";return;}
+    if(username.length<2||username.length>32){error.textContent="User IDは2～32文字で入力してください";return;}
+    if(!/^[A-Za-z0-9_.-]+$/.test(username)){error.textContent="User IDは英数字・_・-・. のみ使用できます";return;}
+    if(password.length<6){error.textContent="パスワードは6文字以上にしてください";return;}
+
+    if(!existing){
+        if(!displayName){error.textContent="Display Nameを入力してください";return;}
+        if(displayName.length>40){error.textContent="Display Nameは40文字以内にしてください";return;}
+        if(password!==confirm){error.textContent="パスワードが一致しません";return;}
+
+        const result=await starosRegisterAccount(username,displayName,password);
+        if(!result.ok){
+            const msg=result.error?.message||"";
+            error.textContent=/duplicate|unique|already exists|already registered/i.test(msg)?"そのUser IDはすでに使用されています":"アカウント作成に失敗しました";
+            return;
+        }
+        const profile=result.data;
+        await enterStarOS({id:profile.id},profile);
+        return;
     }
-    starosLoggedIn=true;
-    document.getElementById("accountScreen").style.display="none";
-    document.getElementById("desktop").style.display="block";
-    applySettings();
+
+    const loginUsername=username;
+    const result=await starosLoginAccount(loginUsername,password);
+    if(!result.ok){
+        error.textContent="User IDまたはパスワードが違います";
+        return;
+    }
+    const profile=result.data;
+    await enterStarOS({id:profile.id},profile);
 }
 
-function logoutStarOS(){
+async function logoutStarOS(){
     starosLoggedIn=false;
+    starosAuthUser=null;
     document.querySelectorAll(".window").forEach(w=>w.remove());
     document.getElementById("startMenu")?.classList.remove("show");
+    if(window.stazonSupabase){try{await window.stazonSupabase.auth.signOut()}catch(e){console.error(e)}}
     showAccountScreen("login");
 }
 
@@ -1818,11 +1953,25 @@ window.addEventListener("load",()=>{
     setupStarDesktopDrop();
     setTimeout(()=>{
         document.getElementById("bootScreen").style.display="none";
-        const account=getAccount();
-        if(account){
-            showAccountScreen("login");
+        if(window.stazonSupabase){
+            window.stazonSupabase.auth.getSession().then(async ({data})=>{
+                starosAuthReady=true;
+                if(data?.session?.user){
+                    const profile=await loadStarosProfile(data.session.user);
+                    if(profile) await enterStarOS(data.session.user,profile);
+                    else showAccountScreen("login");
+                }else{
+                    showAccountScreen("login");
+                }
+            }).catch(()=>showAccountScreen("login"));
+            window.stazonSupabase.auth.onAuthStateChange(async (event,session)=>{
+                if(event==="PASSWORD_RECOVERY"){
+                    openStarRecovery("update");
+                    return;
+                }
+            });
         }else{
-            showAccountScreen("setup");
+            showAccountScreen("login");
         }
         updateClock();
         setInterval(updateClock,1000);
@@ -1832,15 +1981,54 @@ window.addEventListener("load",()=>{
 document.addEventListener("DOMContentLoaded",()=>{
     document.getElementById("accountSubmit")?.addEventListener("click",submitAccount);
     document.getElementById("accountRecoveryButton")?.addEventListener("click",openStarRecovery);
+    document.getElementById("accountEmail")?.addEventListener("keydown",e=>{if(e.key==="Enter")submitAccount();});
     document.getElementById("accountPassword")?.addEventListener("keydown",e=>{if(e.key==="Enter")submitAccount();});
     document.getElementById("accountPasswordConfirm")?.addEventListener("keydown",e=>{if(e.key==="Enter")submitAccount();});
 });
 
 
 /* =========================================================
-   PASSWORD RECOVERY
+   PASSWORD RECOVERY / SUPABASE AUTH
 ========================================================= */
-function openStarRecovery(){const o=document.getElementById('starRecoveryOverlay');if(!o)return;o.classList.add('show');document.getElementById('starRecoveryKey').value='';document.getElementById('starRecoveryError').textContent='';setTimeout(()=>document.getElementById('starRecoveryKey')?.focus(),50)} function closeStarRecovery(){document.getElementById('starRecoveryOverlay')?.classList.remove('show')} async function resetStarPassword(){const key=document.getElementById('starRecoveryKey')?.value||'';const err=document.getElementById('starRecoveryError');if(key!=='starkwsk'){err.textContent='回復キーが違います。';return}const account=getAccount();if(!account){err.textContent='アカウントがありません。';return}const hash=await hashPassword('1234');localStorage.setItem(ACCOUNT_KEY,JSON.stringify({...account,passwordHash:hash,recoveredAt:new Date().toISOString()}));closeStarRecovery();document.getElementById('accountPassword').value='';document.getElementById('accountError').textContent='パスワードを「1234」に再設定しました。';showToast('パスワードを再設定しました');} function factoryResetStarOS(){if(!confirm('StarOSを初期化します。アカウント、設定、ホーム画面、仮想ファイルシステムなどのStarOSデータが削除されます。\n\n本当に初期化しますか？'))return;Object.keys(localStorage).filter(k=>k.startsWith('staros_')||k.startsWith('star_')||k.startsWith('excelJS_')).forEach(k=>localStorage.removeItem(k));try{sessionStorage.clear()}catch(e){}location.reload();} document.addEventListener('keydown',e=>{if(e.key==='Escape')closeStarRecovery();if(e.key==='Enter'&&document.getElementById('starRecoveryOverlay')?.classList.contains('show'))resetStarPassword()});
+let starRecoveryMode="request";
+function openStarRecovery(mode="request"){
+    const o=document.getElementById("starRecoveryOverlay");if(!o)return;
+    o.classList.add("show");
+    starRecoveryMode=mode;
+    const title=document.getElementById("starRecoveryTitle");
+    const desc=document.getElementById("starRecoveryDescription");
+    const email=document.getElementById("starRecoveryEmail");
+    const np=document.getElementById("starRecoveryNewPassword");
+    const btn=document.querySelector("#starRecoveryOverlay .star-recovery-primary");
+    document.getElementById("starRecoveryError").textContent="";
+    if(mode==="update"){
+        title.textContent="新しいパスワードを設定";
+        desc.textContent="新しいパスワードを入力してください。";
+        email.style.display="none";np.style.display="block";btn.textContent="変更";
+    }else{
+        title.textContent="パスワードの再設定";
+        desc.textContent="登録したメールアドレスにパスワード再設定用のリンクを送信します。";
+        email.style.display="block";np.style.display="none";btn.textContent="送信";
+        email.value=getAccount()?.email||"";
+    }
+    setTimeout(()=>document.getElementById(mode==="update"?"starRecoveryNewPassword":"starRecoveryEmail")?.focus(),50);
+}
+function closeStarRecovery(){document.getElementById("starRecoveryOverlay")?.classList.remove("show")}
+async function resetStarPassword(){
+    const err=document.getElementById('starRecoveryError');
+    if(err)err.textContent='User ID方式ではメールを使ったパスワード再設定はできません。';
+}
+function factoryResetStarOS(){
+    if(!confirm("StarOSを初期化します。アカウント、設定、ホーム画面、仮想ファイルシステムなどのStarOSデータが削除されます。\n\n本当に初期化しますか？"))return;
+    Object.keys(localStorage).filter(k=>k.startsWith("staros_")||k.startsWith("star_")||k.startsWith("excelJS_")).forEach(k=>localStorage.removeItem(k));
+    try{sessionStorage.clear()}catch(e){}
+    if(window.stazonSupabase){window.stazonSupabase.auth.signOut().catch(()=>{});}
+    location.reload();
+}
+document.addEventListener("keydown",e=>{
+    if(e.key==="Escape")closeStarRecovery();
+    if(e.key==="Enter"&&document.getElementById("starRecoveryOverlay")?.classList.contains("show"))resetStarPassword();
+});
 
 /* =========================================================
    CLOCK
@@ -4837,7 +5025,7 @@ function renderSettingsPage(
 
                         <div>
                             <div class="setting-card-title">
-                                ユーザー名
+                                Display Name
                             </div>
 
                             <div class="setting-card-description">
@@ -4847,7 +5035,7 @@ function renderSettingsPage(
 
                         <input
                             class="setting-input"
-                            id="usernameInput"
+                            id="displayNameInput"
                             value="${escapeHTML(
                                 settings.username
                             )}">
@@ -4888,17 +5076,23 @@ function renderSettingsPage(
 
             const value =
                 content.querySelector(
-                    "#usernameInput"
+                    "#displayNameInput"
                 ).value.trim();
 
             if(value){
-
                 settings.username=value;
-
                 saveSettings();
+                const account=getAccount();
+                if(account){
+                    account.displayName=value;
+                    saveAccountCache(account);
+                    if(window.stazonSupabase&&account.userId){
+                        window.stazonSupabase.from("staros_profiles").update({display_name:value}).eq("id",account.userId).then(({error})=>{if(error)console.error("Display Name update failed:",error);});
+                    }
+                }
 
                 showToast(
-                    "ユーザー名を保存しました"
+                    "Display Nameを保存しました"
                 );
             }
         };
@@ -6420,9 +6614,11 @@ const STAZON_PRODUCTS=[
 ];
 function stazonCurrentUser(){
  const account=typeof getAccount==="function"?getAccount():null;
- const accountName=account?.username;
- const settingName=typeof settings!=="undefined"?settings?.username:null;
- return accountName||settingName||"Star User";
+ return account?.username || "Star User";
+}
+function stazonCurrentDisplayName(){
+ const account=typeof getAccount==="function"?getAccount():null;
+ return account?.displayName || account?.username || "Star User";
 }
 
 /* =========================================================

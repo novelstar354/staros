@@ -7033,7 +7033,13 @@ function stazonGetChatCache(){try{const x=JSON.parse(localStorage.getItem(STAZON
 function stazonSaveChatCache(x){localStorage.setItem(STAZON_CHAT_CACHE_KEY,JSON.stringify(x));}
 function stazonTradeListings(){
  const me=stazonCurrentUser();
- return stazonGetListings().filter(x=>x.sold&&((x.buyer===me)||(x.seller===me))).sort((a,b)=>(b.soldAt||b.time||0)-(a.soldAt||a.time||0));
+ const listings=stazonGetListings();
+ const inventory=stazonGetInventory().filter(x=>x.owner===me);
+ const ownedIds=new Set(inventory.map(x=>String(x.listingId||x.id)));
+ return listings.filter(x=>{
+   const id=String(x.id);
+   return x.seller===me || (x.sold&&x.buyer===me) || ownedIds.has(id);
+ }).sort((a,b)=>(b.soldAt||b.time||0)-(a.soldAt||a.time||0));
 }
 async function stazonCloudGetTradeMessages(listingId){
  if(!window.stazonSupabase)return null;
@@ -7081,9 +7087,11 @@ async function stazonCloudSendTradeMessage(listingId,message){
  }
 }
 async function stazonEnsureTradeChat(listing){
- if(!listing||!listing.sold)return;
+ if(!listing)return;
  const me=stazonCurrentUser();
- if(listing.buyer!==me&&listing.seller!==me)return;
+ const inventory=stazonGetInventory().filter(x=>x.owner===me);
+ const owns=inventory.some(x=>String(x.listingId||x.id)===String(listing.id));
+ if(listing.seller!==me && listing.buyer!==me && !owns)return;
  const cache=stazonGetChatCache();
  if(!cache[listing.id])cache[listing.id]=[];
  stazonSaveChatCache(cache);

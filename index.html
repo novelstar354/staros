@@ -6582,6 +6582,7 @@ const STAZON_PURCHASES_KEY="stazonPurchases_v1";
 const STAZON_LISTINGS_KEY="stazonListings_v1";
 const STAZON_INVENTORY_KEY="stazonInventory_v1";
 const STAZON_BALANCES_KEY="stazonBalances_v1";
+const STARNEXUS_COINS_KEY="starnexusCoins_v2";
 const STAZON_CHAT_CACHE_KEY="starNexusTradeChats_v1";
 const STAZON_PRODUCTS=[
 {id:"starpad",icon:"▣",name:"StarPad Mini",desc:"StarOS向けの小型デジタルノート。",price:1200},
@@ -6623,8 +6624,15 @@ async function stazonCloudSyncBalance(){
 
         /* 初回だけ、現在のStarOSのstarCoinsをクラウド残高へ移行 */
         if(!data){
-            const local=Number(localStorage.getItem("starCoins"));
-            const initial=Number.isFinite(local)&&local>=0?Math.floor(local):0;
+            const localBalances=stazonGetBalances();
+            const existing=Number(localBalances[user]);
+            const saved=Number(localStorage.getItem(STARNEXUS_COINS_KEY+"::"+user));
+            const legacy=Number(localStorage.getItem("starCoins"));
+            const initial=Number.isFinite(existing)&&existing>=0
+                ?Math.floor(existing)
+                :(Number.isFinite(saved)&&saved>=0
+                    ?Math.floor(saved)
+                    :(Number.isFinite(legacy)&&legacy>=0?Math.floor(legacy):0));
 
             const {error:insertError}=await window.stazonSupabase
                 .from("stazon_balances")
@@ -6656,13 +6664,13 @@ async function stazonCloudSyncBalance(){
         const cloudValue=Math.max(0,Math.floor(Number(data.balance)||0));
         const localBalances=stazonGetBalances();
         const localValue=Number(localBalances[user]);
-        const globalLocal=Number(localStorage.getItem("starCoins"));
+        const savedLocal=Number(localStorage.getItem(STARNEXUS_COINS_KEY+"::"+user));
         const hasLocalAccountBalance=Number.isFinite(localValue)&&localValue>=0&&Object.prototype.hasOwnProperty.call(localBalances,user);
-        const hasLegacyBalance=!hasLocalAccountBalance&&Number.isFinite(globalLocal)&&globalLocal>0;
+        const hasSavedLocal=Number.isFinite(savedLocal)&&savedLocal>=0;
 
         let value=cloudValue;
-        if(cloudValue===0 && (hasLocalAccountBalance && localValue>0 || hasLegacyBalance)){
-            value=hasLocalAccountBalance?Math.floor(localValue):Math.floor(globalLocal);
+        if(cloudValue===0 && ((hasLocalAccountBalance && localValue>0) || (!hasLocalAccountBalance && hasSavedLocal && savedLocal>0))){
+            value=hasLocalAccountBalance?Math.floor(localValue):Math.floor(savedLocal);
             const {error:updateError}=await window.stazonSupabase
                 .from("stazon_balances")
                 .update({balance:value})
@@ -6871,22 +6879,39 @@ function stazonGetBalances(){try{const a=JSON.parse(localStorage.getItem(STAZON_
 function stazonSaveBalances(a){localStorage.setItem(STAZON_BALANCES_KEY,JSON.stringify(a));}
 function stazonGetCoins(){
  const me=stazonCurrentUser(),balances=stazonGetBalances();
- if(!Object.prototype.hasOwnProperty.call(balances,me)){
-   const n=Number(localStorage.getItem("starCoins"));
-   balances[me]=Number.isFinite(n)&&n>=0?Math.floor(n):0;
-   stazonSaveBalances(balances);
+ const accountKey=STARNEXUS_COINS_KEY+"::"+me;
+
+ // StarNexusの残高はStarOS本体やBank/Coinとは完全に分離する。
+ // 共通キー starCoins は読み書きしない。
+ if(Object.prototype.hasOwnProperty.call(balances,me)){
+   const n=Number(balances[me]);
+   const coins=Number.isFinite(n)&&n>=0?Math.floor(n):0;
+   localStorage.setItem(accountKey,String(coins));
+   return coins;
  }
- const n=Number(balances[me]);
- const coins=Number.isFinite(n)&&n>=0?Math.floor(n):0;
- if(String(localStorage.getItem("starCoins"))!==String(coins)) localStorage.setItem("starCoins",String(coins));
+
+ const saved=Number(localStorage.getItem(accountKey));
+ if(Number.isFinite(saved)&&saved>=0){
+   balances[me]=Math.floor(saved);
+   stazonSaveBalances(balances);
+   return Math.floor(saved);
+ }
+
+ // 旧StarOSからの移行時だけ、starCoinsを一度だけ読み取る。
+ // 以後はStarNexus専用キーを使用し、starCoinsへは絶対に書き戻さない。
+ const legacy=Number(localStorage.getItem("starCoins"));
+ const coins=Number.isFinite(legacy)&&legacy>=0?Math.floor(legacy):0;
+ balances[me]=coins;
+ stazonSaveBalances(balances);
+ localStorage.setItem(accountKey,String(coins));
  return coins;
 }
 function stazonSetCoins(n){
  const me=stazonCurrentUser(),coins=Math.max(0,Math.floor(Number(n)||0)),balances=stazonGetBalances();
  balances[me]=coins;
  stazonSaveBalances(balances);
- localStorage.setItem("starCoins",String(coins));
- window.dispatchEvent(new StorageEvent("storage",{key:"starCoins",newValue:String(coins)}));
+ localStorage.setItem(STARNEXUS_COINS_KEY+"::"+me,String(coins));
+ // starCoinsはStarOS/Bank/Coin側の領域なので変更しない。
 }
 function stazonAddCoins(user,amount){
  if(!user)return 0;
@@ -7181,7 +7206,7 @@ async function openStazon(){
 
     return win;
 }
-window.addEventListener("storage",e=>{if(!["starCoins",STAZON_BALANCES_KEY,STAZON_LISTINGS_KEY,STAZON_INVENTORY_KEY,STAZON_CHAT_CACHE_KEY].includes(e.key))return;document.querySelectorAll(".stazon-window").forEach(w=>{const active=w.querySelector(".stazon-tab.active")?.dataset.stazonPage||"shop";renderStazon(w,active);});});
+window.addEventListener("storage",e=>{if(![STAZON_BALANCES_KEY,STAZON_LISTINGS_KEY,STAZON_INVENTORY_KEY,STAZON_CHAT_CACHE_KEY].includes(e.key))return;document.querySelectorAll(".stazon-window").forEach(w=>{const active=w.querySelector(".stazon-tab.active")?.dataset.stazonPage||"shop";renderStazon(w,active);});});
 
 /* =========================================================
    DYNAMIC TASKBAR

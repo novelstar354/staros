@@ -6583,7 +6583,71 @@ const STAZON_LISTINGS_KEY="stazonListings_v1";
 const STAZON_INVENTORY_KEY="stazonInventory_v1";
 const STAZON_BALANCES_KEY="stazonBalances_v1";
 const STARNEXUS_COINS_KEY="starnexusCoins_v2";
+
 const STAZON_CHAT_CACHE_KEY="starNexusTradeChats_v1";
+
+/* =========================================================
+   BANK / COIN 優先保護
+   StarNexusの取引以外では、既存のBank/Coin残高を0で上書きしない。
+========================================================= */
+const STAR_BANKCOIN_PROTECTED_KEY="starosBankCoinProtection_v1";
+let starBankCoinProtection={};
+try{
+    const raw=JSON.parse(localStorage.getItem(STAR_BANKCOIN_PROTECTED_KEY)||"{}");
+    if(raw&&typeof raw==="object") starBankCoinProtection=raw;
+}catch(e){}
+function starIsBankCoinKey(key){
+    const k=String(key||"").toLowerCase();
+    return /bank|coin|balance|wallet|starcoin/.test(k)
+        && !k.includes("starnexus")
+        && !k.includes("stazon");
+}
+function starRememberBankCoinValues(){
+    try{
+        for(let i=0;i<localStorage.length;i++){
+            const key=localStorage.key(i);
+            if(!key||!starIsBankCoinKey(key)) continue;
+            const value=localStorage.getItem(key);
+            if(value==null||value==="") continue;
+            const n=Number(value);
+            if(Number.isFinite(n)&&n>0) starBankCoinProtection[key]=Math.floor(n);
+        }
+        localStorage.setItem(STAR_BANKCOIN_PROTECTED_KEY,JSON.stringify(starBankCoinProtection));
+    }catch(e){}
+}
+function starProtectBankCoinZeroWrite(key,value){
+    if(!starIsBankCoinKey(key)) return false;
+    const n=Number(value);
+    const old=Number(starBankCoinProtection[key]);
+    if(Number.isFinite(old)&&old>0&&Number.isFinite(n)&&n===0){
+        return true;
+    }
+    if(Number.isFinite(n)&&n>0) starBankCoinProtection[key]=Math.floor(n);
+    return false;
+}
+(function installBankCoinProtection(){
+    try{
+        starRememberBankCoinValues();
+        if(window.__starBankCoinSetItemPatched)return;
+        const originalSetItem=Storage.prototype.setItem;
+        Storage.prototype.setItem=function(key,value){
+            if(this===localStorage && starProtectBankCoinZeroWrite(key,value)){
+                return;
+            }
+            const result=originalSetItem.call(this,key,value);
+            if(this===localStorage && starIsBankCoinKey(key)){
+                const n=Number(value);
+                if(Number.isFinite(n)&&n>0){
+                    starBankCoinProtection[key]=Math.floor(n);
+                    originalSetItem.call(this,STAR_BANKCOIN_PROTECTED_KEY,JSON.stringify(starBankCoinProtection));
+                }
+            }
+            return result;
+        };
+        window.__starBankCoinSetItemPatched=true;
+    }catch(e){console.warn("Bank/Coin protection unavailable:",e)}
+})();
+
 const STAZON_PRODUCTS=[
 {id:"starpad",icon:"▣",name:"StarPad Mini",desc:"StarOS向けの小型デジタルノート。",price:1200},
 {id:"starcase",icon:"◇",name:"Star Case",desc:"星マーク入りのシンプルなケース。",price:850},
@@ -6627,12 +6691,21 @@ async function stazonCloudSyncBalance(){
             const localBalances=stazonGetBalances();
             const existing=Number(localBalances[user]);
             const saved=Number(localStorage.getItem(STARNEXUS_COINS_KEY+"::"+user));
-            const legacy=Number(localStorage.getItem("starCoins"));
+            const bankCoinCandidates=[];
+            try{
+                for(let i=0;i<localStorage.length;i++){
+                    const key=localStorage.key(i);
+                    if(!key||!starIsBankCoinKey(key)) continue;
+                    const n=Number(localStorage.getItem(key));
+                    if(Number.isFinite(n)&&n>0) bankCoinCandidates.push(Math.floor(n));
+                }
+            }catch(e){}
+            const bankCoin=bankCoinCandidates.length?Math.max(...bankCoinCandidates):0;
             const initial=Number.isFinite(existing)&&existing>=0
                 ?Math.floor(existing)
                 :(Number.isFinite(saved)&&saved>=0
                     ?Math.floor(saved)
-                    :(Number.isFinite(legacy)&&legacy>=0?Math.floor(legacy):0));
+                    :(bankCoin>0?bankCoin:0));
 
             const {error:insertError}=await window.stazonSupabase
                 .from("stazon_balances")
@@ -6996,12 +7069,40 @@ async function stazonCloudGetTradeMessages(listingId){
 }
 async function stazonCloudSendTradeMessage(listingId,message){
  if(!window.stazonSupabase)return {ok:false,error:"Supabaseが接続されていません"};
+ const sender=String(stazonCurrentUser()||"").trim();
+ const id=String(listingId||"").trim();
+ const text=String(message||"").trim();
+ if(!id)return {ok:false,error:"取引IDが取得できませんでした"};
+ if(!sender)return {ok:false,error:"ログイン中のユーザーIDが取得できませんでした"};
+ if(!text)return {ok:false,error:"メッセージを入力してください"};
  try{
-  const {data,error}=await window.stazonSupabase.rpc("staros_send_trade_message",{p_listing_id:listingId,p_sender:stazonCurrentUser(),p_message:message});
-  if(error)throw error;
-  if(!data?.ok)return {ok:false,error:data?.error||"送信できませんでした"};
-  return {ok:true};
- }catch(e){console.error("Trade message send failed:",e);return {ok:false,error:"メッセージを送信できませんでした"};}
+  const rpc=await window.stazonSupabase.rpc("staros_send_trade_message",{
+      p_listing_id:id,
+      p_sender:sender,
+      p_message:text
+  });
+
+  if(rpc.error){
+      console.error("Trade message RPC failed:",rpc.error);
+      const e=rpc.error;
+      return {
+        ok:false,
+        error:"メッセージ送信に失敗しました: "+(e.message||e.code||"Supabase RPCエラー")
+      };
+  }
+
+  let data=rpc.data;
+  if(Array.isArray(data)) data=data[0]||null;
+  if(typeof data==="string"){
+      try{data=JSON.parse(data)}catch(e){}
+  }
+  if(data?.ok===true || data==null)return {ok:true};
+  if(data?.error)return {ok:false,error:String(data.error)};
+  return {ok:false,error:"Supabaseから正常な送信結果が返りませんでした"};
+ }catch(e){
+  console.error("Trade message send failed:",e);
+  return {ok:false,error:"メッセージ送信に失敗しました: "+(e?.message||String(e))};
+ }
 }
 async function stazonEnsureTradeChat(listing){
  if(!listing||!listing.sold)return;

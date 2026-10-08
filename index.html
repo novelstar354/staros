@@ -7352,7 +7352,7 @@ async function starNexusRealtimeRefreshListings(){
             for(const win of starNexusOpenWindows()){
                 const active=win.querySelector(".stazon-tab.active")?.dataset.stazonPage||"shop";
                 // 「出品する」は入力内容を守るため、リアルタイム同期では再描画しない
-                if(active==="sell") continue;
+                if(active==="sell" || active==="chat") continue;
                 await stazonCloudSyncListings(win,active);
             }
         }

@@ -6679,6 +6679,28 @@ async function stazonCloudSyncBalance(mode="push"){
 
     try{
         const localBalance=stazonGetCoins();
+
+        // StarNexusを開いただけではDBの値でローカル残高を上書きしない。
+        // 残高の作成・更新はRLSを通過するSECURITY DEFINER RPCで行う。
+        if(mode!=="pull"){
+            const {data,error}=await window.stazonSupabase.rpc("sync_stazon_balance",{
+                p_username:user,
+                p_balance:localBalance
+            });
+            if(error) throw error;
+
+            const result=Array.isArray(data)?data[0]:data;
+            if(!result || result.ok!==true){
+                return {ok:false,error:result?.error||"残高の同期に失敗しました"};
+            }
+
+            return {
+                ok:true,
+                balance:Number(result.balance)||0
+            };
+        }
+
+        // 購入RPCが確定した後だけDBの確定残高を取得して反映する。
         const {data,error}=await window.stazonSupabase
             .from("stazon_balances")
             .select("username,balance")
@@ -6686,38 +6708,13 @@ async function stazonCloudSyncBalance(mode="push"){
             .maybeSingle();
         if(error) throw error;
 
-        /*
-         * StarOSの共通StarCoinは通常 localStorage が現在値。
-         * StarNexusを開いただけではDBの値でローカル残高を上書きしない。
-         *
-         * push : StarOS -> Supabase
-         * pull : Supabase -> StarOS（購入成功後など、DBが確定値になった時だけ）
-         */
-        if(mode==="pull"){
-            if(!data){
-                const {error:insertError}=await window.stazonSupabase
-                    .from("stazon_balances")
-                    .insert({username:user,balance:localBalance});
-                if(insertError) throw insertError;
-                return {ok:true,balance:localBalance};
-            }
-            const value=Math.max(0,Math.floor(Number(data.balance)||0));
-            stazonSetCoins(value);
-            return {ok:true,balance:value};
+        if(!data){
+            return {ok:true,balance:localBalance};
         }
 
-        // 初回、またはStarOS側で獲得した残高をSupabaseへ保存。
-        // 既存行が0でも、StarNexusを開いただけでローカルを0にはしない。
-        if(!data || Number(data.balance)!==localBalance){
-            const {error:upsertError}=await window.stazonSupabase
-                .from("stazon_balances")
-                .upsert(
-                    {username:user,balance:localBalance},
-                    {onConflict:"username"}
-                );
-            if(upsertError) throw upsertError;
-        }
-        return {ok:true,balance:localBalance};
+        const value=Math.max(0,Math.floor(Number(data.balance)||0));
+        stazonSetCoins(value);
+        return {ok:true,balance:value};
     }catch(e){
         console.error("Stazon balance sync failed:",e);
         return {ok:false,error:e?.message||e?.details||e?.hint||"残高同期に失敗しました"};
@@ -6818,33 +6815,25 @@ async function stazonCloudBuyListing(id){
 
     try{
         const buyer=stazonCurrentUser();
-
-        /*
-         * DB関数側で
-         * 1. 商品をロック
-         * 2. 購入者の残高確認
-         * 3. 購入者 - 商品価格
-         * 4. 出品者 + 商品価格
-         * 5. 商品を売却済みに変更
-         * 6. 所有商品を追加
-         * 7. 購入履歴を追加
-         * を一括処理します。
-         */
-        const {data,error}=await window.stazonSupabase
-            .rpc("buy_stazon_listing",{
-                p_listing_id:id,
-                p_buyer:buyer
-            });
+        const {data,error}=await window.stazonSupabase.rpc("buy_stazon_listing",{
+            p_listing_id:id,
+            p_buyer:buyer
+        });
 
         if(error) throw error;
 
         const result=Array.isArray(data)?data[0]:data;
-        if(result===true || result?.ok===true) return {ok:true};
-        return {
-            ok:false,
-            error:result?.error||"購入に失敗しました"
-        };
+        if(!result || result.ok!==true){
+            return {
+                ok:false,
+                error:result?.error||"購入に失敗しました"
+            };
+        }
 
+        return {
+            ok:true,
+            balance:Number(result.balance)||0
+        };
     }catch(e){
         console.error("Stazon purchase failed:",e);
         return {ok:false,error:e?.message||e?.details||e?.hint||"購入処理に失敗しました"};
@@ -6999,8 +6988,8 @@ async function stazonBuyListing(win,id){
  if(window.stazonSupabase){
    const result=await stazonCloudBuyListing(id);
    if(!result.ok){showToast(result.error||"購入に失敗しました");return;}
-   // RPCで確定した購入後残高だけをDBからStarOSへ反映する。
-   await stazonCloudSyncBalance("pull");
+   // 購入RPCが返した確定残高だけをStarOSへ反映する。
+   stazonSetCoins(result.balance);
    await stazonCloudSyncListings(null);
    await stazonCloudSyncInventory();
    await stazonCloudSyncPurchases();

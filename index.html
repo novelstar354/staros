@@ -6603,66 +6603,19 @@ const STARNEXUS_COINS_KEY="starnexusCoins_v2";
 const STAZON_CHAT_CACHE_KEY="starNexusTradeChats_v1";
 
 /* =========================================================
-   BANK / COIN 優先保護
-   StarNexusの取引以外では、既存のBank/Coin残高を0で上書きしない。
+   STAROS 共通残高
+   StarCoin = starCoins / 銀行預金 = starBank
+   StarOSは通常時は読み取りのみ。取引成功時だけStarCoinを書き換える。
 ========================================================= */
-const STAR_BANKCOIN_PROTECTED_KEY="starosBankCoinProtection_v1";
-let starBankCoinProtection={};
-try{
-    const raw=JSON.parse(localStorage.getItem(STAR_BANKCOIN_PROTECTED_KEY)||"{}");
-    if(raw&&typeof raw==="object") starBankCoinProtection=raw;
-}catch(e){}
-function starIsBankCoinKey(key){
-    const k=String(key||"").toLowerCase();
-    return /bank|coin|balance|wallet|starcoin/.test(k)
-        && !k.includes("starnexus")
-        && !k.includes("stazon");
+const STAR_COINS_KEY="starCoins";
+const STAR_BANK_KEY="starBank";
+function starReadNumber(key){
+    const n=Number(localStorage.getItem(key));
+    return Number.isFinite(n)&&n>=0?Math.floor(n):0;
 }
-function starRememberBankCoinValues(){
-    try{
-        for(let i=0;i<localStorage.length;i++){
-            const key=localStorage.key(i);
-            if(!key||!starIsBankCoinKey(key)) continue;
-            const value=localStorage.getItem(key);
-            if(value==null||value==="") continue;
-            const n=Number(value);
-            if(Number.isFinite(n)&&n>0) starBankCoinProtection[key]=Math.floor(n);
-        }
-        localStorage.setItem(STAR_BANKCOIN_PROTECTED_KEY,JSON.stringify(starBankCoinProtection));
-    }catch(e){}
+function starReadCommonBalances(){
+    return {coins:starReadNumber(STAR_COINS_KEY),bank:starReadNumber(STAR_BANK_KEY)};
 }
-function starProtectBankCoinZeroWrite(key,value){
-    if(!starIsBankCoinKey(key)) return false;
-    const n=Number(value);
-    const old=Number(starBankCoinProtection[key]);
-    if(Number.isFinite(old)&&old>0&&Number.isFinite(n)&&n===0){
-        return true;
-    }
-    if(Number.isFinite(n)&&n>0) starBankCoinProtection[key]=Math.floor(n);
-    return false;
-}
-(function installBankCoinProtection(){
-    try{
-        starRememberBankCoinValues();
-        if(window.__starBankCoinSetItemPatched)return;
-        const originalSetItem=Storage.prototype.setItem;
-        Storage.prototype.setItem=function(key,value){
-            if(this===localStorage && starProtectBankCoinZeroWrite(key,value)){
-                return;
-            }
-            const result=originalSetItem.call(this,key,value);
-            if(this===localStorage && starIsBankCoinKey(key)){
-                const n=Number(value);
-                if(Number.isFinite(n)&&n>0){
-                    starBankCoinProtection[key]=Math.floor(n);
-                    originalSetItem.call(this,STAR_BANKCOIN_PROTECTED_KEY,JSON.stringify(starBankCoinProtection));
-                }
-            }
-            return result;
-        };
-        window.__starBankCoinSetItemPatched=true;
-    }catch(e){console.warn("Bank/Coin protection unavailable:",e)}
-})();
 
 const STAZON_PRODUCTS=[
 {id:"starpad",icon:"▣",name:"StarPad Mini",desc:"StarOS向けの小型デジタルノート。",price:1200},
@@ -6688,91 +6641,42 @@ function stazonCurrentDisplayName(){
    StarOSの既存アカウント名を共有マーケットのユーザーIDとして使用
 ========================================================= */
 
-async function stazonCloudSyncBalance(){
+async function stazonCloudSyncBalance(applyToCommonBalance=false){
     if(!window.stazonSupabase) return {ok:false,error:"Supabaseが接続されていません"};
-
     const user=stazonCurrentUser();
-
     try{
         const {data,error}=await window.stazonSupabase
             .from("stazon_balances")
             .select("username,balance")
             .eq("username",user)
             .maybeSingle();
-
         if(error) throw error;
 
-        /* 初回だけ、現在のStarOSのstarCoinsをクラウド残高へ移行 */
         if(!data){
-            const localBalances=stazonGetBalances();
-            const existing=Number(localBalances[user]);
-            const saved=Number(localStorage.getItem(STARNEXUS_COINS_KEY+"::"+user));
-            const bankCoinCandidates=[];
-            try{
-                for(let i=0;i<localStorage.length;i++){
-                    const key=localStorage.key(i);
-                    if(!key||!starIsBankCoinKey(key)) continue;
-                    const n=Number(localStorage.getItem(key));
-                    if(Number.isFinite(n)&&n>0) bankCoinCandidates.push(Math.floor(n));
-                }
-            }catch(e){}
-            const bankCoin=bankCoinCandidates.length?Math.max(...bankCoinCandidates):0;
-            const initial=Number.isFinite(existing)&&existing>=0
-                ?Math.floor(existing)
-                :(Number.isFinite(saved)&&saved>=0
-                    ?Math.floor(saved)
-                    :(bankCoin>0?bankCoin:0));
-
+            const initial=starReadNumber(STAR_COINS_KEY);
             const {error:insertError}=await window.stazonSupabase
                 .from("stazon_balances")
                 .insert({username:user,balance:initial});
-
             if(insertError){
-                /* 同時作成などで既に存在した場合は再取得 */
                 const retry=await window.stazonSupabase
-                    .from("stazon_balances")
-                    .select("balance")
-                    .eq("username",user)
-                    .maybeSingle();
-
+                    .from("stazon_balances").select("balance")
+                    .eq("username",user).maybeSingle();
                 if(retry.error) throw retry.error;
-                const value=Number(retry.data?.balance ?? initial);
-                stazonSetCoins(value);
+                const value=Math.max(0,Math.floor(Number(retry.data?.balance??initial)));
+                if(applyToCommonBalance) stazonSetCoins(value);
                 return {ok:true,balance:value};
             }
-
-            stazonSetCoins(initial);
+            if(applyToCommonBalance) stazonSetCoins(initial);
             return {ok:true,balance:initial};
         }
 
-        /*
-         * Supabase側が0でも、現在のアカウントに既にローカル残高が
-         * 存在する場合は、それを0で上書きしない。
-         * 旧StarOSから移行した残高を守り、クラウド側も同期する。
-         */
-        const cloudValue=Math.max(0,Math.floor(Number(data.balance)||0));
-        const localBalances=stazonGetBalances();
-        const localValue=Number(localBalances[user]);
-        const savedLocal=Number(localStorage.getItem(STARNEXUS_COINS_KEY+"::"+user));
-        const hasLocalAccountBalance=Number.isFinite(localValue)&&localValue>=0&&Object.prototype.hasOwnProperty.call(localBalances,user);
-        const hasSavedLocal=Number.isFinite(savedLocal)&&savedLocal>=0;
-
-        let value=cloudValue;
-        if(cloudValue===0 && ((hasLocalAccountBalance && localValue>0) || (!hasLocalAccountBalance && hasSavedLocal && savedLocal>0))){
-            value=hasLocalAccountBalance?Math.floor(localValue):Math.floor(savedLocal);
-            const {error:updateError}=await window.stazonSupabase
-                .from("stazon_balances")
-                .update({balance:value})
-                .eq("username",user);
-            if(updateError) throw updateError;
-        }
-
-        stazonSetCoins(value);
+        const value=Math.max(0,Math.floor(Number(data.balance)||0));
+        // 重要: 表示・同期だけではStarOS共通残高を変更しない。
+        if(applyToCommonBalance) stazonSetCoins(value);
         return {ok:true,balance:value};
-
     }catch(e){
         console.error("Stazon balance sync failed:",e);
-        return {ok:false,error:"StarCoin残高の同期に失敗しました"};
+        return {ok:false,error:e?.message||"残高同期に失敗しました"};
     }
 }
 
@@ -6967,49 +6871,28 @@ async function stazonCloudSyncPurchases(){
 function stazonGetBalances(){try{const a=JSON.parse(localStorage.getItem(STAZON_BALANCES_KEY)||"{}");return a&&typeof a==="object"&&!Array.isArray(a)?a:{};}catch(e){return{};}}
 function stazonSaveBalances(a){localStorage.setItem(STAZON_BALANCES_KEY,JSON.stringify(a));}
 function stazonGetCoins(){
- const me=stazonCurrentUser(),balances=stazonGetBalances();
- const accountKey=STARNEXUS_COINS_KEY+"::"+me;
-
- // StarNexusの残高はStarOS本体やBank/Coinとは完全に分離する。
- // 共通キー starCoins は読み書きしない。
- if(Object.prototype.hasOwnProperty.call(balances,me)){
-   const n=Number(balances[me]);
-   const coins=Number.isFinite(n)&&n>=0?Math.floor(n):0;
-   localStorage.setItem(accountKey,String(coins));
-   return coins;
- }
-
- const saved=Number(localStorage.getItem(accountKey));
- if(Number.isFinite(saved)&&saved>=0){
-   balances[me]=Math.floor(saved);
-   stazonSaveBalances(balances);
-   return Math.floor(saved);
- }
-
- // 旧StarOSからの移行時だけ、starCoinsを一度だけ読み取る。
- // 以後はStarNexus専用キーを使用し、starCoinsへは絶対に書き戻さない。
- const legacy=Number(localStorage.getItem("starCoins"));
- const coins=Number.isFinite(legacy)&&legacy>=0?Math.floor(legacy):0;
- balances[me]=coins;
- stazonSaveBalances(balances);
- localStorage.setItem(accountKey,String(coins));
- return coins;
+    return starReadNumber(STAR_COINS_KEY);
 }
 function stazonSetCoins(n){
- const me=stazonCurrentUser(),coins=Math.max(0,Math.floor(Number(n)||0)),balances=stazonGetBalances();
- balances[me]=coins;
- stazonSaveBalances(balances);
- localStorage.setItem(STARNEXUS_COINS_KEY+"::"+me,String(coins));
- // starCoinsはStarOS/Bank/Coin側の領域なので変更しない。
+    const coins=Math.max(0,Math.floor(Number(n)||0));
+    localStorage.setItem(STAR_COINS_KEY,String(coins));
+}
+function stazonGetBankCoins(){
+    return starReadNumber(STAR_BANK_KEY);
 }
 function stazonAddCoins(user,amount){
- if(!user)return 0;
- const balances=stazonGetBalances(),old=Number(balances[user]);
- const base=Number.isFinite(old)&&old>=0?Math.floor(old):0;
- const add=Math.max(0,Math.floor(Number(amount)||0));
- balances[user]=base+add;
- stazonSaveBalances(balances);
- return balances[user];
+    if(!user)return 0;
+    const add=Math.max(0,Math.floor(Number(amount)||0));
+    if(user===stazonCurrentUser()){
+        const next=stazonGetCoins()+add;
+        stazonSetCoins(next);
+        return next;
+    }
+    const balances=stazonGetBalances(),old=Number(balances[user]);
+    const base=Number.isFinite(old)&&old>=0?Math.floor(old):0;
+    balances[user]=base+add;
+    stazonSaveBalances(balances);
+    return balances[user];
 }
 function stazonGetPurchases(){try{return JSON.parse(localStorage.getItem(STAZON_PURCHASES_KEY)||"[]")}catch(e){return[]}}
 function stazonSavePurchases(a){localStorage.setItem(STAZON_PURCHASES_KEY,JSON.stringify(a))}
@@ -7035,7 +6918,7 @@ async function stazonBuyListing(win,id){
  if(window.stazonSupabase){
    const result=await stazonCloudBuyListing(id);
    if(!result.ok){showToast(result.error||"購入に失敗しました");return;}
-   await stazonCloudSyncBalance();
+   await stazonCloudSyncBalance(true);
    await stazonCloudSyncListings(null);
    await stazonCloudSyncInventory();
    await stazonCloudSyncPurchases();
@@ -7178,7 +7061,7 @@ async function renderStazonChat(win,listingId){
 }
 
 function renderStazon(win,page="shop"){
- const content=win.querySelector(".window-content"),coins=stazonGetCoins(),history=stazonGetPurchases(),inventory=stazonGetInventory().filter(x=>x.owner===stazonCurrentUser()),listings=stazonGetListings(),me=stazonCurrentUser();
+ const content=win.querySelector(".window-content"),coins=stazonGetCoins(),bankCoins=stazonGetBankCoins(),history=stazonGetPurchases(),inventory=stazonGetInventory().filter(x=>x.owner===stazonCurrentUser()),listings=stazonGetListings(),me=stazonCurrentUser();
 
  content.innerHTML=`<div class="stazon-app">
    <div class="stazon-top">
@@ -7190,8 +7073,10 @@ function renderStazon(win,page="shop"){
        </div>
      </div>
      <div class="stazon-balance">
-       <div class="stazon-balance-label">残高</div>
+       <div class="stazon-balance-label">スターコイン</div>
        <div class="stazon-balance-value">${stazonFormat(coins)}</div>
+       <div class="stazon-balance-label" style="margin-top:4px;opacity:.7">銀行預金</div>
+       <div class="stazon-balance-value" style="opacity:.85">${stazonFormat(bankCoins)}</div>
      </div>
    </div>
    <div class="stazon-body">
@@ -7344,54 +7229,12 @@ function starNexusOpenWindows(){
 }
 
 async function starNexusRealtimeRefreshListings(){
-    if(!window.stazonSupabase || starNexusRealtimeRefreshing)return;
-    starNexusRealtimeRefreshing=true;
-    try{
-        const result=await stazonCloudSyncListings(null,"market");
-        if(result.ok){
-            for(const win of starNexusOpenWindows()){
-                const active=win.querySelector(".stazon-tab.active")?.dataset.stazonPage||"shop";
-                // 「出品する」は入力内容を守るため、リアルタイム同期では再描画しない
-                if(active==="sell" || active==="chat") continue;
-                await stazonCloudSyncListings(win,active);
-            }
-        }
-    }finally{
-        starNexusRealtimeRefreshing=false;
-    }
+    // Realtimeでは出品一覧を更新しない。
+    return;
 }
-
 async function starNexusRealtimeRefreshChat(listingId){
-    if(!listingId || !window.stazonSupabase)return;
-    const id=String(listingId);
-    for(const win of starNexusOpenWindows()){
-        const active=win.querySelector(".stazon-tab.active")?.dataset.stazonPage;
-        if(active!=="chat")continue;
-
-        const buttons=[...win.querySelectorAll("[data-trade-thread]")];
-        const selected=buttons.find(b=>String(b.dataset.tradeThread)===id);
-        if(!selected)continue;
-
-        // リアルタイム同期ではチャット全体を再描画しない。
-        // 入力欄を作り直すと、入力中のメッセージが消えてしまうため、
-        // メッセージ一覧だけを更新する。
-        const messagesArea=win.querySelector(".stazon-chat-messages");
-        if(!messagesArea)continue;
-
-        const cloud=await stazonCloudGetTradeMessages(id);
-        if(cloud===null)continue;
-
-        const cache=stazonGetChatCache();
-        cache[id]=cloud;
-        stazonSaveChatCache(cache);
-
-        const me=stazonCurrentUser();
-        messagesArea.innerHTML=cloud.length
-            ? cloud.map(m=>`<div class="stazon-chat-message ${m.sender===me?'mine':''}"><div>${escapeHTML(m.message||'')}</div><div class="stazon-chat-meta">${escapeHTML(m.sender||'')} · ${m.created_at?new Date(m.created_at).toLocaleString('ja-JP'):new Date(m.time||Date.now()).toLocaleString('ja-JP')}</div></div>`).join('')
-            : '<div class="stazon-chat-locked">まだメッセージはありません。<br>取引について出品者にメッセージを送れます。</div>';
-
-        messagesArea.scrollTop=messagesArea.scrollHeight;
-    }
+    // Realtimeではチャット表示・相手・入力欄を更新しない。
+    return;
 }
 
 function startStarNexusRealtime(){
@@ -7399,29 +7242,23 @@ function startStarNexusRealtime(){
     starNexusRealtimeStarted=true;
 
     try{
+        /*
+         * StarNexusのRealtimeは「画面状態を勝手に変える同期」には使わない。
+         *
+         * ・出品一覧
+         * ・出品する画面
+         * ・チャット相手/選択中の相手
+         * ・チャット入力欄
+         * はRealtimeイベントから更新しない。
+         *
+         * 購入処理そのものは、購入ボタンを押したときにDB側で処理する。
+         */
         starNexusRealtimeChannel=window.stazonSupabase
-            .channel("starnexus-realtime-v1")
-            .on(
-                "postgres_changes",
-                {event:"*",schema:"public",table:"stazon_listings"},
-                async payload=>{
-                    console.log("StarNexus listing realtime:",payload.eventType);
-                    await starNexusRealtimeRefreshListings();
-                }
-            )
-            .on(
-                "postgres_changes",
-                {event:"INSERT",schema:"public",table:"staron_trade_messages"},
-                async payload=>{
-                    const listingId=payload.new?.listing_id;
-                    console.log("StarNexus trade message realtime:",listingId);
-                    if(listingId)await starNexusRealtimeRefreshChat(String(listingId));
-                }
-            )
+            .channel("starnexus-realtime-v2")
             .subscribe(status=>{
                 console.log("StarNexus Realtime status:",status);
                 if(status==="SUBSCRIBED"){
-                    showToast("StarNexusをリアルタイム同期しました");
+                    showToast("StarNexusに接続しました");
                 }
             });
     }catch(e){
@@ -7443,10 +7280,14 @@ function stopStarNexusRealtime(){
 
 let starNexusRealtimePollTimer=null;
 function startStarNexusRealtimeFallbackPoll(){
+    /*
+     * 出品・チャットはRealtime/Fallback Pollから自動更新しない。
+     * 必要なデータは、アプリを開いたときや購入・送信などの操作時だけ取得する。
+     */
     if(starNexusRealtimePollTimer)return;
-    starNexusRealtimePollTimer=setInterval(async()=>{
-        if(!starNexusOpenWindows().length)return;
-        if(window.stazonSupabase)await starNexusRealtimeRefreshListings();
+    starNexusRealtimePollTimer=setInterval(()=>{
+        // 意図的に何もしない。
+        // 出品画面やチャット画面を勝手に書き換えないため。
     },10000);
 }
 
@@ -7459,7 +7300,6 @@ async function openStazon(){
     renderStazon(win,"shop");
 
     if(window.stazonSupabase){
-        await stazonCloudSyncBalance();
         await stazonCloudSyncListings(null);
         await stazonCloudSyncInventory();
         await stazonCloudSyncPurchases();
@@ -7470,7 +7310,39 @@ async function openStazon(){
 
     return win;
 }
-window.addEventListener("storage",e=>{if(![STAZON_BALANCES_KEY,STAZON_LISTINGS_KEY,STAZON_INVENTORY_KEY,STAZON_CHAT_CACHE_KEY].includes(e.key))return;document.querySelectorAll(".stazon-window").forEach(w=>{const active=w.querySelector(".stazon-tab.active")?.dataset.stazonPage||"shop";renderStazon(w,active);});});
+window.addEventListener("storage",e=>{
+    /*
+     * Realtime対象外のStarNexus状態は、storageイベントでも再描画しない。
+     * これにより別タブ/別ウィンドウの出品・チャット変更で、
+     * 入力中の内容や選択中のチャットが勝手に変わらない。
+     */
+    if(![STAR_COINS_KEY,STAR_BANK_KEY].includes(e.key))return;
+
+    document.querySelectorAll(".stazon-window").forEach(w=>{
+        const active=w.querySelector(".stazon-tab.active")?.dataset.stazonPage||"shop";
+
+        // 残高だけを同期。出品・チャットの状態は触らない。
+        if(active==="sell" || active==="chat")return;
+
+        renderStazon(w,active);
+    });
+});
+let starCommonBalanceLast=JSON.stringify(starReadCommonBalances());
+setInterval(()=>{
+    const now=JSON.stringify(starReadCommonBalances());
+    if(now===starCommonBalanceLast)return;
+    starCommonBalanceLast=now;
+
+    document.querySelectorAll(".stazon-window").forEach(w=>{
+        const active=w.querySelector(".stazon-tab.active")?.dataset.stazonPage||"shop";
+
+        // 残高同期でも「出品する」「取引チャット」は絶対に再描画しない。
+        // 入力中のフォーム・選択中の相手・メッセージ入力欄を維持する。
+        if(active==="sell" || active==="chat")return;
+
+        renderStazon(w,active);
+    });
+},500);
 
 /* =========================================================
    DYNAMIC TASKBAR

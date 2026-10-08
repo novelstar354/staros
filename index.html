@@ -1212,6 +1212,20 @@ body.staros-light .window-title{color:#172033}.body.staros-light{}
     .star-store-card-actions .explorer-button{width:100%;}
 }
 
+
+/* =========================================================
+   STAR活 - StarOS専用 StarCoin activity app
+========================================================= */
+.starkatsu-app{height:100%;display:flex;flex-direction:column;background:linear-gradient(180deg,#090e17,#05080e);color:#eaf2ff;overflow:hidden}
+.starkatsu-top{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:18px 20px;border-bottom:1px solid rgba(255,255,255,.09);background:linear-gradient(135deg,#111a2b,#080d16)}
+.starkatsu-brand{display:flex;align-items:center;gap:12px}.starkatsu-logo{width:44px;height:44px;border-radius:13px;display:grid;place-items:center;background:linear-gradient(145deg,#eef2f7,#8995a8);color:#111827;font-size:24px;font-weight:900;box-shadow:0 5px 20px rgba(0,0,0,.25)}
+.starkatsu-title{font-size:21px;font-weight:850;letter-spacing:1px}.starkatsu-sub{font-size:10px;color:#8295b4;margin-top:3px;letter-spacing:1px}
+.starkatsu-balance{min-width:170px;padding:10px 14px;border:1px solid rgba(205,215,230,.18);border-radius:12px;background:rgba(255,255,255,.045);text-align:right}.starkatsu-balance-label{font-size:10px;color:#8da0bd}.starkatsu-balance-value{font-size:19px;font-weight:850;color:#f2f4f8;margin-top:2px}
+.starkatsu-main{flex:1;min-height:0;overflow:auto;padding:20px}.starkatsu-hero{padding:20px;border:1px solid rgba(180,195,220,.14);border-radius:16px;background:radial-gradient(circle at 80% 20%,rgba(105,155,255,.13),transparent 35%),rgba(255,255,255,.035);margin-bottom:16px}.starkatsu-hero h2{margin:0;font-size:22px}.starkatsu-hero p{margin:7px 0 0;color:#8192ad;font-size:12px;line-height:1.6}.starkatsu-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:16px}.starkatsu-stat{padding:12px;border:1px solid rgba(180,195,220,.11);border-radius:11px;background:rgba(0,0,0,.15)}.starkatsu-stat small{display:block;color:#788ca9;font-size:10px}.starkatsu-stat b{display:block;margin-top:4px;font-size:17px}
+.starkatsu-section-title{font-size:15px;font-weight:800;margin:20px 0 10px}.starkatsu-missions{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:11px}.starkatsu-mission{padding:15px;border:1px solid rgba(180,195,220,.12);border-radius:13px;background:rgba(255,255,255,.035)}.starkatsu-mission.done{opacity:.58}.starkatsu-mission-head{display:flex;gap:10px;align-items:flex-start}.starkatsu-mission-icon{font-size:27px;width:35px}.starkatsu-mission-title{font-weight:750;font-size:13px}.starkatsu-mission-desc{margin-top:4px;color:#8192ad;font-size:10px;line-height:1.5}.starkatsu-mission-progress{height:6px;background:#111a29;border-radius:99px;overflow:hidden;margin-top:13px}.starkatsu-mission-progress>i{display:block;height:100%;background:#5d9cff;border-radius:99px;transition:width .2s}.starkatsu-mission-bottom{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:11px}.starkatsu-reward{font-size:12px;font-weight:800;color:#e6ebf3}.starkatsu-claim{border:1px solid #53627a;background:#172235;color:#fff;border-radius:8px;padding:7px 11px;cursor:pointer;font-weight:700}.starkatsu-claim:hover{background:#223149}.starkatsu-claim:disabled{opacity:.4;cursor:not-allowed}
+.starkatsu-history{display:flex;flex-direction:column;gap:7px}.starkatsu-history-item{display:flex;justify-content:space-between;gap:12px;padding:10px 12px;border:1px solid rgba(180,195,220,.1);border-radius:9px;background:rgba(255,255,255,.025);font-size:11px}.starkatsu-history-item small{color:#7185a3}.starkatsu-note{font-size:10px;color:#687c9b;line-height:1.6;margin-top:12px}.starkatsu-refresh{border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.05);color:#dce7f7;border-radius:8px;padding:7px 10px;cursor:pointer}.starkatsu-refresh:hover{background:rgba(255,255,255,.09)}
+@media(max-width:650px){.starkatsu-top{align-items:flex-start}.starkatsu-balance{min-width:0}.starkatsu-stats{grid-template-columns:1fr}.starkatsu-main{padding:12px}.starkatsu-hero{padding:15px}}
+
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
@@ -1314,6 +1328,7 @@ window.stazonSupabase=(window.supabase&&window.supabase.createClient)
       <button onclick="addStarDesktopApp('terminal','💻','Star Terminal')">💻 ターミナルを追加</button>
       <button onclick="addStarDesktopApp('settings','⚙️','Star Settings')">⚙️ 設定を追加</button>
       <button onclick="addStarDesktopApp('stazon','★','StarNexus')">★ StarNexusを追加</button>
+      <button onclick="addStarDesktopApp('starkatsu','🌟','Star活')">🌟 Star活を追加</button>
       <button onclick="addStarDesktopFilePrompt()">📄 ファイルを追加</button>
       <button onclick="addStarDesktopTrash()">🗑️ ゴミ箱を追加</button>
     </div>
@@ -1372,6 +1387,10 @@ window.stazonSupabase=(window.supabase&&window.supabase.createClient)
 
     <button class="start-app" onclick="openStazon();closeStartMenu()">
         <span class="app-icon">★</span><span class="app-name">StarNexus</span>
+    </button>
+
+    <button class="start-app" onclick="openStarKatsu();closeStartMenu()">
+        <span class="app-icon">🌟</span><span class="app-name">Star活</span>
     </button>
 
     <button class="start-app"
@@ -3208,6 +3227,7 @@ function setupStarStartAppDrag(){
       ["launchInstalledStarApp('staride')",'staride','💻','Star IDE'],
       ['openAppStore','appstore','🛒','Star Apps Store'],
       ['openStazon','stazon','★','StarNexus'],
+      ['openStarKatsu','starkatsu','🌟','Star活'],
       ['openTerminal','terminal','💻','Star Terminal'],
       ['openSettings','settings','⚙️','Star Settings'],
       ['openAbout','about','★','About StarOS'],
@@ -6625,7 +6645,10 @@ const STAZON_PRODUCTS=[
 {id:"starbadge",icon:"★",name:"Star Badge",desc:"StarOSユーザー向けメタルバッジ。",price:500},
 {id:"nothingbox",icon:"□",name:"NOTHING Box",desc:"何も入っていない箱。もちろん何もありません。",price:100},
 {id:"uselessmanual",icon:"▤",name:"役に立たないマニュアル",desc:"読むほど役に立たなくなる公式冊子。",price:240},
-{id:"staroswallpaper",icon:"✦",name:"StarOS Wallpaper Pack",desc:"StarOS用の星空壁紙セット。",price:900}
+{id:"staroswallpaper",icon:"✦",name:"StarOS Wallpaper Pack",desc:"StarOS用の星空壁紙セット。",price:900},
+
+// 恒常商品: 購入されてもショップから消えず、ユーザーごとに購入上限を設定できます。
+{id:"staros-support-badge",icon:"✪",name:"StarOS サポーターバッジ",desc:"StarOS公式の恒常商品。購入後もショップに残り続けます。",price:1000,permanent:true,purchaseLimit:3}
 ];
 function stazonCurrentUser(){
  const account=typeof getAccount==="function"?getAccount():null;
@@ -6901,14 +6924,29 @@ function stazonSaveInventory(a){localStorage.setItem(STAZON_INVENTORY_KEY,JSON.s
 function stazonGetListings(){try{const a=JSON.parse(localStorage.getItem(STAZON_LISTINGS_KEY)||"[]");return Array.isArray(a)?a:[]}catch(e){return[]}}
 function stazonSaveListings(a){localStorage.setItem(STAZON_LISTINGS_KEY,JSON.stringify(a))}
 function stazonFormat(n){return Number(n).toLocaleString("ja-JP")+" StarCoin"}
+function stazonOfficialPurchaseCount(productId,user){
+ const me=user||stazonCurrentUser();
+ return stazonGetInventory().filter(x=>x.owner===me && x.productId===productId).length;
+}
+
 function stazonBuy(win,id){
  const p=STAZON_PRODUCTS.find(x=>x.id===id);if(!p)return;
+ const me=stazonCurrentUser();
+ const owned=stazonOfficialPurchaseCount(p.id,me);
+ const limit=Number.isFinite(Number(p.purchaseLimit)) ? Math.max(0,Math.floor(Number(p.purchaseLimit))) : null;
+ if(limit!==null && owned>=limit){
+   showToast("この商品は1人"+limit+"個まで購入できます");
+   return;
+ }
  const coins=stazonGetCoins();if(coins<p.price){showToast("StarCoinが足りません");return}
- if(!confirm(p.name+"を"+stazonFormat(p.price)+"で購入しますか？"))return;
+ const limitText=limit!==null ? "\n購入上限: 1人"+limit+"個\n現在の購入数: "+owned+"個" : "";
+ if(!confirm(p.name+"を"+stazonFormat(p.price)+"で購入しますか？"+limitText))return;
  stazonSetCoins(coins-p.price);
- const inv=stazonGetInventory();inv.unshift({id:"official_"+Date.now()+"_"+Math.random().toString(36).slice(2,7),productId:p.id,name:p.name,desc:p.desc,price:p.price,icon:p.icon,owner:stazonCurrentUser(),seller:"StarOS公式",time:Date.now()});stazonSaveInventory(inv);
- const h=stazonGetPurchases();h.unshift({id:p.id,name:p.name,price:p.price,icon:p.icon,time:Date.now(),seller:"StarOS公式"});stazonSavePurchases(h);
- showToast(p.name+"を購入しました");renderStazon(win,"inventory")
+ const inv=stazonGetInventory();
+ inv.unshift({id:"official_"+Date.now()+"_"+Math.random().toString(36).slice(2,7),productId:p.id,name:p.name,desc:p.desc,price:p.price,icon:p.icon,owner:me,seller:"StarOS公式",time:Date.now(),permanent:!!p.permanent,purchaseLimit:limit});
+ stazonSaveInventory(inv);
+ const h=stazonGetPurchases();h.unshift({id:"official_"+p.id+"_"+Date.now(),productId:p.id,name:p.name,price:p.price,icon:p.icon,time:Date.now(),seller:"StarOS公式"});stazonSavePurchases(h);
+ showToast(p.name+"を購入しました");renderStazon(win,"shop")
 }
 async function stazonBuyListing(win,id){
  const list=stazonGetListings(),item=list.find(x=>x.id===id);if(!item||item.sold)return;
@@ -7193,17 +7231,23 @@ function renderStazon(win,page="shop"){
 
  }else{
    area.innerHTML=`
-     <p class="stazon-notice">StarOS共通のStarCoinで購入できます。公式商品を表示しています。購入した商品は「購入品」に追加されます。</p>
+     <p class="stazon-notice">StarOS共通のStarCoinで購入できます。公式商品を表示しています。恒常商品は購入されてもショップから消えず、商品ごとに1人あたりの購入上限を設定できます。</p>
      <div class="stazon-grid">
-       ${STAZON_PRODUCTS.map(p=>`
+       ${STAZON_PRODUCTS.map(p=>{
+         const owned=stazonOfficialPurchaseCount(p.id,me);
+         const limit=Number.isFinite(Number(p.purchaseLimit)) ? Math.max(0,Math.floor(Number(p.purchaseLimit))) : null;
+         const reached=limit!==null && owned>=limit;
+         return `
          <div class="stazon-card">
            <div class="stazon-product-icon">${escapeHTML(p.icon)}</div>
            <div class="stazon-product-name">${escapeHTML(p.name)}</div>
            <div class="stazon-product-desc">${escapeHTML(p.desc)}</div>
+           ${p.permanent?'<div style="display:inline-block;margin-top:8px;padding:4px 8px;border:1px solid rgba(210,220,235,.2);border-radius:999px;font-size:10px;color:#d8e1ee">恒常商品</div>':''}
+           ${limit!==null?`<div style="font-size:11px;color:#8293aa;margin-top:8px">購入上限: ${limit}個 / あなたの購入数: ${owned}個</div>`:''}
            <div class="stazon-price">${stazonFormat(p.price)}</div>
-           <button class="stazon-buy" data-stazon-buy="${p.id}" ${coins<p.price?'disabled':''}>購入する</button>
+           <button class="stazon-buy" data-stazon-buy="${p.id}" ${coins<p.price||reached?'disabled':''}>${reached?'購入上限に到達':'購入する'}</button>
          </div>
-       `).join("")}
+       `;}).join("")}
      </div>
    `;
  }
@@ -7343,6 +7387,95 @@ setInterval(()=>{
         renderStazon(w,active);
     });
 },500);
+
+
+/* =========================================================
+   STAR活
+   StarOSで遊びながら安全にStarCoinを獲得するミッションアプリ
+========================================================= */
+const STARKATSU_KEY="staros_starkatsu_v1";
+function starKatsuToday(){return new Date().toISOString().slice(0,10)}
+function starKatsuLoad(){
+    try{
+        const x=JSON.parse(localStorage.getItem(STARKATSU_KEY)||"{}");
+        return x&&typeof x==="object"?x:{today:starKatsuToday(),claimed:{},opened:[],history:[],total:0,streak:0,lastDay:null};
+    }catch(e){return {today:starKatsuToday(),claimed:{},opened:[],history:[],total:0,streak:0,lastDay:null};}
+}
+function starKatsuSave(x){localStorage.setItem(STARKATSU_KEY,JSON.stringify(x))}
+function starKatsuState(){
+    const x=starKatsuLoad(),today=starKatsuToday();
+    if(x.today!==today){
+        const yesterday=new Date(Date.now()-86400000).toISOString().slice(0,10);
+        x.streak=x.lastDay===yesterday?(Number(x.streak)||0)+1:1;
+        x.today=today;x.claimed={};x.opened=[];
+        starKatsuSave(x);
+    }
+    return x;
+}
+function starKatsuFormat(n){return Math.floor(Number(n)||0).toLocaleString("ja-JP")+" StarCoin"}
+function starKatsuAward(amount,reason){
+    const n=Math.max(0,Math.floor(Number(amount)||0));if(!n)return;
+    if(typeof stazonGetCoins==="function"&&typeof stazonSetCoins==="function"){
+        stazonSetCoins(stazonGetCoins()+n);
+    }else{
+        localStorage.setItem("starCoins",String((Number(localStorage.getItem("starCoins"))||0)+n));
+    }
+    const x=starKatsuState();x.total=(Number(x.total)||0)+n;
+    x.history=Array.isArray(x.history)?x.history:[];
+    x.history.unshift({amount:n,reason:String(reason||"Star活報酬"),time:Date.now()});
+    x.history=x.history.slice(0,30);starKatsuSave(x);
+    showToast("🌟 +"+n+" StarCoin — "+reason);
+    document.querySelectorAll(".starkatsu-window").forEach(w=>renderStarKatsu(w));
+}
+const STAR_KATSU_MISSIONS=[
+    {id:"login",icon:"☀️",title:"今日のチェックイン",desc:"Star活を今日初めて開いてチェックインします。",reward:10,progress:()=>1,target:1},
+    {id:"apps",icon:"🚀",title:"3つのアプリを使う",desc:"今日、3種類のStarOSアプリを起動します。",reward:15,progress:x=>Math.min(3,(x.opened||[]).length),target:3},
+    {id:"nexus",icon:"★",title:"StarNexusをのぞく",desc:"今日StarNexusを1回開くと達成です。",reward:5,progress:x=>x.opened?.includes("StarNexus")?1:0,target:1},
+    {id:"streak7",icon:"🔥",title:"7日連続Star活",desc:"7日連続でStar活を開いてチェックインします。",reward:50,progress:x=>Math.min(7,Number(x.streak)||0),target:7}
+];
+function starKatsuMissionValue(m,x){return Math.min(m.target,Number(m.progress(x))||0)}
+function starKatsuClaim(id){
+    const x=starKatsuState(),m=STAR_KATSU_MISSIONS.find(v=>v.id===id);if(!m)return;
+    if(x.claimed[id]){showToast("このミッションは本日受取済みです");return;}
+    if(starKatsuMissionValue(m,x)<m.target){showToast("まだミッション達成前です");return;}
+    x.claimed[id]=true;starKatsuSave(x);starKatsuAward(m.reward,m.title);
+}
+function renderStarKatsu(win){
+    const area=win.querySelector(".window-content"),x=starKatsuState();if(!area)return;
+    const coins=typeof stazonGetCoins==="function"?stazonGetCoins():Number(localStorage.getItem("starCoins"))||0;
+    const bank=typeof stazonGetBankCoins==="function"?stazonGetBankCoins():Number(localStorage.getItem("starBank"))||0;
+    area.innerHTML=`<div class="starkatsu-app">
+      <div class="starkatsu-top"><div class="starkatsu-brand"><div class="starkatsu-logo">★</div><div><div class="starkatsu-title">Star活</div><div class="starkatsu-sub">STAROS ACTIVITY CENTER</div></div></div><div class="starkatsu-balance"><div class="starkatsu-balance-label">現在のスターコイン</div><div class="starkatsu-balance-value">${starKatsuFormat(coins)}</div><div class="starkatsu-balance-label" style="margin-top:4px">銀行預金</div><div class="starkatsu-balance-value" style="font-size:13px;opacity:.8">${starKatsuFormat(bank)}</div></div></div>
+      <div class="starkatsu-main">
+        <div class="starkatsu-hero"><div style="display:flex;align-items:center;justify-content:space-between;gap:10px"><div><h2>StarOSで活動して、StarCoinを獲得</h2><p>毎日のチェックインやアプリ利用など、StarOS内の活動でコインを集められます。</p></div><button class="starkatsu-refresh" id="starkatsuRefresh">更新</button></div><div class="starkatsu-stats"><div class="starkatsu-stat"><small>今日の連続日数</small><b>${x.streak||0}日</b></div><div class="starkatsu-stat"><small>Star活で獲得した合計</small><b>${starKatsuFormat(x.total||0)}</b></div><div class="starkatsu-stat"><small>今日使ったアプリ</small><b>${(x.opened||[]).length}種類</b></div></div></div>
+        <div class="starkatsu-section-title">今日のミッション</div><div class="starkatsu-missions">${STAR_KATSU_MISSIONS.map(m=>{const value=starKatsuMissionValue(m,x),claimed=!!x.claimed[m.id],pct=Math.round(value/m.target*100);return `<div class="starkatsu-mission ${claimed?'done':''}"><div class="starkatsu-mission-head"><div class="starkatsu-mission-icon">${m.icon}</div><div><div class="starkatsu-mission-title">${m.title}</div><div class="starkatsu-mission-desc">${m.desc}</div></div></div><div class="starkatsu-mission-progress"><i style="width:${pct}%"></i></div><div class="starkatsu-mission-bottom"><span class="starkatsu-reward">+${m.reward} StarCoin</span><button class="starkatsu-claim" data-starkatsu-claim="${m.id}" ${claimed||value<m.target?'disabled':''}>${claimed?'受取済み':value<m.target?value+" / "+m.target:"受け取る"}</button></div></div>`}).join("")}</div>
+        <div class="starkatsu-section-title">最近の獲得履歴</div><div class="starkatsu-history">${(x.history||[]).slice(0,8).map(h=>`<div class="starkatsu-history-item"><span>🌟 ${escapeHTML(h.reason||"Star活報酬")}</span><b>+${Number(h.amount)||0} StarCoin</b><small>${new Date(h.time||Date.now()).toLocaleString("ja-JP")}</small></div>`).join("")||'<div class="starkatsu-note">まだ獲得履歴はありません。</div>'}</div>
+        <div class="starkatsu-note">※ Star活はStarOSの共通スターコイン残高を使用します。銀行預金そのものは自動では増えません。</div>
+      </div></div>`;
+    area.querySelectorAll("[data-starkatsu-claim]").forEach(b=>b.onclick=()=>starKatsuClaim(b.dataset.starkatsuClaim));
+    area.querySelector("#starkatsuRefresh")?.addEventListener("click",()=>renderStarKatsu(win));
+    if(!x.claimed.login)starKatsuClaim("login");
+}
+function openStarKatsu(){
+    const win=openAppWindow("Star活","🌟","starkatsu-window");
+    win.style.width="900px";win.style.height="650px";win.dataset.starDesktop=String(starCurrentDesktop);
+    renderStarKatsu(win);return win;
+}
+function starKatsuTrackApp(title){
+    const x=starKatsuState(),name=String(title||"").trim();
+    if(!name||name==="Star活")return;
+    x.opened=Array.isArray(x.opened)?x.opened:[];
+    if(!x.opened.includes(name)){x.opened.push(name);starKatsuSave(x);}
+    if(name==="StarNexus"&&!x.claimed.nexus){
+        const m=STAR_KATSU_MISSIONS.find(v=>v.id==="nexus");
+        if(m&&starKatsuMissionValue(m,x)>=m.target)starKatsuClaim("nexus");
+    }
+    document.querySelectorAll(".starkatsu-window").forEach(w=>renderStarKatsu(w));
+}
+function starKatsuInstallObserver(){
+    const layer=document.getElementById("windowLayer");if(!layer)return;
+    const ob=new MutationObserver(ms=>ms.forEach(m=>m.addedNodes.forEach(n=>{if(!(n instanceof HTMLElement)||!n.classList.contains("window"))return;setTimeout(()=>starKatsuTrackApp(n.querySelector(".window-title")?.textContent),0);})));ob.observe(layer,{childList:true});
+}
 
 /* =========================================================
    DYNAMIC TASKBAR
@@ -7585,6 +7718,7 @@ document.addEventListener("mousedown",e=>{const q=document.getElementById("quick
 
 /* 初期状態 */
 updateStarQuickUI();updateInstalledStarAppUI();
+starKatsuInstallObserver();
 if(starQuick.focus)startStarFocusTimer();
 
 /* =========================================================

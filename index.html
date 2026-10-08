@@ -1226,6 +1226,14 @@ body.staros-light .window-title{color:#172033}.body.staros-light{}
 .starkatsu-history{display:flex;flex-direction:column;gap:7px}.starkatsu-history-item{display:flex;justify-content:space-between;gap:12px;padding:10px 12px;border:1px solid rgba(180,195,220,.1);border-radius:9px;background:rgba(255,255,255,.025);font-size:11px}.starkatsu-history-item small{color:#7185a3}.starkatsu-note{font-size:10px;color:#687c9b;line-height:1.6;margin-top:12px}.starkatsu-refresh{border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.05);color:#dce7f7;border-radius:8px;padding:7px 10px;cursor:pointer}.starkatsu-refresh:hover{background:rgba(255,255,255,.09)}
 @media(max-width:650px){.starkatsu-top{align-items:flex-start}.starkatsu-balance{min-width:0}.starkatsu-stats{grid-template-columns:1fr}.starkatsu-main{padding:12px}.starkatsu-hero{padding:15px}}
 
+
+.stazon-option-row{display:flex;align-items:center;gap:8px;margin:10px 0;color:#d8e1ee;font-size:13px;cursor:pointer}
+.stazon-option-row input{accent-color:#d9dee7}
+.stazon-limit-row{display:grid;grid-template-columns:1fr 110px 130px;gap:8px;align-items:center;margin:8px 0;color:#aebbd0;font-size:12px}
+.stazon-limit-row .stazon-field{margin:0}
+.stazon-permanent-badge{display:inline-block;margin-top:8px;padding:4px 8px;border:1px solid rgba(210,220,235,.25);border-radius:999px;font-size:10px;color:#d8e1ee}
+.stazon-limit-info{font-size:11px;color:#8293aa;margin-top:7px}
+@media(max-width:650px){.stazon-limit-row{grid-template-columns:1fr}.stazon-limit-row .stazon-field{width:100%;box-sizing:border-box}}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
@@ -6709,7 +6717,7 @@ async function stazonCloudSyncListings(win,page){
     try{
         const {data,error}=await window.stazonSupabase
             .from("stazon_listings")
-            .select("id,name,description,price,icon,seller,created_at,sold,buyer,sold_at")
+            .select("id,name,description,price,icon,seller,created_at,sold,buyer,sold_at,permanent,purchase_limit")
             .order("created_at",{ascending:false});
 
         if(error) throw error;
@@ -6724,7 +6732,9 @@ async function stazonCloudSyncListings(win,page){
             time:x.created_at?Date.parse(x.created_at):Date.now(),
             sold:!!x.sold,
             buyer:x.buyer||null,
-            soldAt:x.sold_at?Date.parse(x.sold_at):null
+            soldAt:x.sold_at?Date.parse(x.sold_at):null,
+            permanent:!!x.permanent,
+            purchaseLimit:Number.isFinite(Number(x.purchase_limit)) && Number(x.purchase_limit)>0 ? Math.floor(Number(x.purchase_limit)) : null
         }));
 
         stazonSaveListings(listings);
@@ -6754,7 +6764,9 @@ async function stazonCloudCreateListing(item){
                 price:item.price,
                 icon:item.icon||"★",
                 seller:item.seller,
-                sold:false
+                sold:false,
+                permanent:!!item.permanent,
+                purchase_limit:stazonListingLimit(item)
             });
 
         if(error) throw error;
@@ -6928,6 +6940,14 @@ function stazonOfficialPurchaseCount(productId,user){
  const me=user||stazonCurrentUser();
  return stazonGetInventory().filter(x=>x.owner===me && x.productId===productId).length;
 }
+function stazonListingPurchaseCount(listingId,user){
+ const me=user||stazonCurrentUser();
+ return stazonGetInventory().filter(x=>x.owner===me && x.listingId===listingId).length;
+}
+function stazonListingLimit(item){
+ const n=Number(item?.purchaseLimit);
+ return Number.isFinite(n) && n>0 ? Math.floor(n) : null;
+}
 
 function stazonBuy(win,id){
  const p=STAZON_PRODUCTS.find(x=>x.id===id);if(!p)return;
@@ -6949,10 +6969,15 @@ function stazonBuy(win,id){
  showToast(p.name+"を購入しました");renderStazon(win,"shop")
 }
 async function stazonBuyListing(win,id){
- const list=stazonGetListings(),item=list.find(x=>x.id===id);if(!item||item.sold)return;
+ const list=stazonGetListings(),item=list.find(x=>x.id===id);if(!item)return;
+ if(!item.permanent && item.sold)return;
  const me=stazonCurrentUser();if(item.seller===me){showToast("自分の出品は購入できません");return}
+ const owned=stazonListingPurchaseCount(item.id,me);
+ const limit=stazonListingLimit(item);
+ if(limit!==null && owned>=limit){showToast("この商品は1人"+limit+"個まで購入できます");return}
  const coins=stazonGetCoins();if(coins<item.price){showToast("StarCoinが足りません");return}
- if(!confirm(item.name+"を"+stazonFormat(item.price)+"で購入しますか？\n出品者: "+item.seller))return;
+ const limitText=limit!==null ? "\n購入上限: 1人"+limit+"個\n現在の購入数: "+owned+"個" : "\n購入上限: なし";
+ if(!confirm(item.name+"を"+stazonFormat(item.price)+"で購入しますか？\n出品者: "+item.seller+limitText))return;
  if(window.stazonSupabase){
    const result=await stazonCloudBuyListing(id);
    if(!result.ok){showToast(result.error||"購入に失敗しました");return;}
@@ -6965,8 +6990,10 @@ async function stazonBuyListing(win,id){
    renderStazon(win,"inventory");
    return;
  }
- stazonSetCoins(coins-item.price);stazonAddCoins(item.seller,item.price);item.sold=true;item.buyer=me;item.soldAt=Date.now();stazonSaveListings(list);
- const inv=stazonGetInventory();inv.unshift({id:"owned_"+Date.now()+"_"+Math.random().toString(36).slice(2,8),listingId:item.id,name:item.name,desc:item.desc,price:item.price,icon:item.icon||"★",owner:me,seller:item.seller,time:Date.now()});stazonSaveInventory(inv);
+ stazonSetCoins(coins-item.price);stazonAddCoins(item.seller,item.price);
+ if(!item.permanent){item.sold=true;item.buyer=me;item.soldAt=Date.now();}
+ stazonSaveListings(list);
+ const inv=stazonGetInventory();inv.unshift({id:"owned_"+Date.now()+"_"+Math.random().toString(36).slice(2,8),listingId:item.id,name:item.name,desc:item.desc,price:item.price,icon:item.icon||"★",owner:me,seller:item.seller,time:Date.now(),permanent:!!item.permanent,purchaseLimit:limit});stazonSaveInventory(inv);
  const h=stazonGetPurchases();h.unshift({id:item.id,name:item.name,price:item.price,icon:item.icon||"★",time:Date.now(),seller:item.seller});stazonSavePurchases(h);
  showToast(item.name+"を購入しました");await stazonEnsureTradeChat(item);renderStazon(win,"inventory")
 }
@@ -6975,10 +7002,14 @@ async function stazonCreateListing(win){
  const desc=win.querySelector("#stazonSellDesc")?.value.trim()||"StarNexusユーザーの出品商品";
  const price=Math.floor(Number(win.querySelector("#stazonSellPrice")?.value));
  const icon=win.querySelector("#stazonSellIcon")?.value.trim()||"★";
+ const permanent=win.querySelector("#stazonSellPermanent")?.checked===true;
+ const limitMode=win.querySelector("#stazonSellLimitMode")?.value||"none";
+ const purchaseLimit=limitMode==="limited" ? Math.floor(Number(win.querySelector("#stazonSellLimit")?.value)) : null;
  if(!name){showToast("商品名を入力してください");return}
  if(!Number.isFinite(price)||price<1){showToast("価格は1 StarCoin以上にしてください");return}
  if(price>999999999){showToast("価格が高すぎます");return}
- const item={id:"listing_"+Date.now()+"_"+Math.random().toString(36).slice(2,8),name,desc,price,icon,seller:stazonCurrentUser(),time:Date.now(),sold:false};
+ if(limitMode==="limited" && (!Number.isFinite(purchaseLimit)||purchaseLimit<1)){showToast("購入上限は1個以上にしてください");return}
+ const item={id:"listing_"+Date.now()+"_"+Math.random().toString(36).slice(2,8),name,desc,price,icon,seller:stazonCurrentUser(),time:Date.now(),sold:false,permanent,purchaseLimit};
  if(window.stazonSupabase){const ok=await stazonCloudCreateListing(item);if(!ok)return;}
  const listings=stazonGetListings();listings.unshift(item);stazonSaveListings(listings);showToast("商品を出品しました");renderStazon(win,"sell");
  if(window.stazonSupabase)await stazonCloudSyncListings(win,"sell");
@@ -7180,6 +7211,8 @@ function renderStazon(win,page="shop"){
            <div class="stazon-product-icon">${escapeHTML(p.icon||"★")}</div>
            <div class="stazon-product-name">${escapeHTML(p.name)}</div>
            <div class="stazon-product-desc">${escapeHTML(p.desc)}</div>
+           ${p.permanent?'<div class="stazon-permanent-badge">恒常商品</div>':''}
+           <div class="stazon-limit-info">${stazonListingLimit(p)!==null?'購入上限: 1人'+stazonListingLimit(p)+'個':'購入上限: なし'}</div>
            <div class="stazon-price">${stazonFormat(p.price)}</div>
            <button class="stazon-buy" data-stazon-delete="${p.id}">出品を取り下げる</button>
          </div>
@@ -7204,6 +7237,15 @@ function renderStazon(win,page="shop"){
        <input id="stazonSellName" class="stazon-field" placeholder="商品名">
        <input id="stazonSellIcon" class="stazon-field" maxlength="2" placeholder="アイコン（例: ★）">
        <input id="stazonSellPrice" class="stazon-field" type="number" min="1" placeholder="価格（StarCoin）">
+       <label class="stazon-option-row"><input id="stazonSellPermanent" type="checkbox"> <span>恒常商品にする（購入されても商品を残す）</span></label>
+       <div class="stazon-limit-row">
+         <label for="stazonSellLimitMode">1人あたりの購入制限</label>
+         <select id="stazonSellLimitMode" class="stazon-field">
+           <option value="none">なし</option>
+           <option value="limited">あり</option>
+         </select>
+         <input id="stazonSellLimit" class="stazon-field" type="number" min="1" step="1" value="1" placeholder="上限個数">
+       </div>
        <textarea id="stazonSellDesc" class="stazon-field stazon-textarea" placeholder="商品の説明"></textarea>
        <button class="stazon-sell-button" id="stazonCreateSell">出品する</button>
      </div>
@@ -7214,7 +7256,7 @@ function renderStazon(win,page="shop"){
    `;
 
  }else if(page==="market"){
-   const active=listings.filter(x=>!x.sold&&x.seller!==me);
+   const active=listings.filter(x=>(x.permanent||!x.sold)&&x.seller!==me);
    area.innerHTML=`
      <p class="stazon-notice">他のユーザーが出品した商品です。購入すると、あなたのStarCoinが出品者へ移り、商品が「購入品」に追加されます。</p>
      ${active.length?`<div class="stazon-grid">${active.map(p=>`
@@ -7223,6 +7265,8 @@ function renderStazon(win,page="shop"){
          <div class="stazon-product-name">${escapeHTML(p.name)}</div>
          <div class="stazon-product-desc">${escapeHTML(p.desc)}</div>
          <div class="stazon-seller">出品者: ${escapeHTML(p.seller)}</div>
+         ${p.permanent?'<div class="stazon-permanent-badge">恒常商品</div>':''}
+         ${stazonListingLimit(p)!==null?`<div class="stazon-limit-info">購入上限: 1人${stazonListingLimit(p)}個 / あなた: ${stazonListingPurchaseCount(p.id,me)}個</div>`:'<div class="stazon-limit-info">購入上限: なし</div>'}
          <div class="stazon-price">${stazonFormat(p.price)}</div>
          <button class="stazon-buy" data-stazon-listing="${p.id}" ${coins<p.price?'disabled':''}>購入する</button>
        </div>

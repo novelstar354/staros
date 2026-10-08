@@ -7116,7 +7116,7 @@ async function renderStazonChat(win,listingId){
  const area=win.querySelector(".stazon-content");if(!area)return;
  const threads=stazonTradeListings();
  if(!threads.length){area.innerHTML='<div class="stazon-empty">購入済み・販売済みの商品がまだありません。<br>商品を購入すると、ここから出品者とやり取りできます。</div>';return;}
- const selected=threads.find(x=>x.id===listingId)||threads[0];
+ const selected=threads.find(x=>String(x.id)===String(listingId))||threads[0];
  await stazonEnsureTradeChat(selected);
  let messages=stazonGetChatCache()[selected.id]||[];
  if(window.stazonSupabase){const cloud=await stazonCloudGetTradeMessages(selected.id);if(cloud!==null){messages=cloud;const cache=stazonGetChatCache();cache[selected.id]=messages;stazonSaveChatCache(cache);}}
@@ -7131,10 +7131,31 @@ async function renderStazonChat(win,listingId){
  </div>`;
  const scroll=area.querySelector('.stazon-chat-messages');if(scroll)scroll.scrollTop=scroll.scrollHeight;
  area.querySelectorAll('[data-trade-thread]').forEach(b=>b.onclick=()=>renderStazonChat(win,b.dataset.tradeThread));
- const send=async()=>{const input=area.querySelector('#stazonChatInput');const message=input?.value.trim();if(!message)return;const now=new Date().toISOString();
-   if(window.stazonSupabase){const result=await stazonCloudSendTradeMessage(selected.id,message);if(!result.ok){showToast(result.error);return;}}
-   else{const cache=stazonGetChatCache();cache[selected.id]=cache[selected.id]||[];cache[selected.id].push({sender:me,message,created_at:now});stazonSaveChatCache(cache);}
-   input.value='';await renderStazonChat(win,selected.id);
+ let sending=false;
+ const send=async()=>{
+   if(sending)return;
+   const input=area.querySelector('#stazonChatInput');
+   const button=area.querySelector('#stazonChatSend');
+   const message=input?.value.trim();
+   if(!message)return;
+   const now=new Date().toISOString();
+   sending=true;
+   if(button){button.disabled=true;button.textContent='送信中…';}
+   try{
+     if(window.stazonSupabase){
+       const result=await stazonCloudSendTradeMessage(String(selected.id),message);
+       if(!result.ok){showToast(result.error);return;}
+     }else{
+       const cache=stazonGetChatCache();
+       cache[selected.id]=cache[selected.id]||[];
+       cache[selected.id].push({sender:me,message,created_at:now});
+       stazonSaveChatCache(cache);
+     }
+     if(input)input.value='';
+     await renderStazonChat(win,String(selected.id));
+   }finally{
+     sending=false;
+   }
  };
  area.querySelector('#stazonChatSend')?.addEventListener('click',send);
  area.querySelector('#stazonChatInput')?.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send();}});
@@ -7173,6 +7194,10 @@ function renderStazon(win,page="shop"){
  const area=content.querySelector(".stazon-content");
 
  if(page==="chat"){
+   // チャット画面でもStarNexus上部のタブを有効にする
+   content.querySelectorAll("[data-stazon-page]").forEach(b=>{
+       b.onclick=()=>renderStazon(win,b.dataset.stazonPage);
+   });
    renderStazonChat(win);
    return;
 
@@ -7289,6 +7314,107 @@ function renderStazon(win,page="shop"){
  content.querySelectorAll("[data-stazon-chat]").forEach(b=>{b.onclick=()=>renderStazonChat(win,b.dataset.stazonChat);});
  content.querySelector("#stazonCreateSell")?.addEventListener("click",()=>{stazonCreateListing(win);});
 }
+
+/* =========================================================
+   STARNEXUS REALTIME
+   出品・取引チャットをSupabase Realtimeで自動更新
+========================================================= */
+let starNexusRealtimeChannel=null;
+let starNexusRealtimeStarted=false;
+let starNexusRealtimeRefreshing=false;
+
+function starNexusOpenWindows(){
+    return [...document.querySelectorAll(".stazon-window")];
+}
+
+async function starNexusRealtimeRefreshListings(){
+    if(!window.stazonSupabase || starNexusRealtimeRefreshing)return;
+    starNexusRealtimeRefreshing=true;
+    try{
+        const result=await stazonCloudSyncListings(null,"market");
+        if(result.ok){
+            for(const win of starNexusOpenWindows()){
+                const active=win.querySelector(".stazon-tab.active")?.dataset.stazonPage||"shop";
+                // 「出品する」は入力内容を守るため、リアルタイム同期では再描画しない
+                if(active==="sell") continue;
+                await stazonCloudSyncListings(win,active);
+            }
+        }
+    }finally{
+        starNexusRealtimeRefreshing=false;
+    }
+}
+
+async function starNexusRealtimeRefreshChat(listingId){
+    if(!listingId)return;
+    const id=String(listingId);
+    for(const win of starNexusOpenWindows()){
+        const active=win.querySelector(".stazon-tab.active")?.dataset.stazonPage;
+        if(active!=="chat")continue;
+        const buttons=[...win.querySelectorAll("[data-trade-thread]")];
+        const selected=buttons.find(b=>String(b.dataset.tradeThread)===id);
+        if(selected){
+            await renderStazonChat(win,id);
+        }
+    }
+}
+
+function startStarNexusRealtime(){
+    if(!window.stazonSupabase || starNexusRealtimeStarted)return;
+    starNexusRealtimeStarted=true;
+
+    try{
+        starNexusRealtimeChannel=window.stazonSupabase
+            .channel("starnexus-realtime-v1")
+            .on(
+                "postgres_changes",
+                {event:"*",schema:"public",table:"stazon_listings"},
+                async payload=>{
+                    console.log("StarNexus listing realtime:",payload.eventType);
+                    await starNexusRealtimeRefreshListings();
+                }
+            )
+            .on(
+                "postgres_changes",
+                {event:"INSERT",schema:"public",table:"staron_trade_messages"},
+                async payload=>{
+                    const listingId=payload.new?.listing_id;
+                    console.log("StarNexus trade message realtime:",listingId);
+                    if(listingId)await starNexusRealtimeRefreshChat(String(listingId));
+                }
+            )
+            .subscribe(status=>{
+                console.log("StarNexus Realtime status:",status);
+                if(status==="SUBSCRIBED"){
+                    showToast("StarNexusをリアルタイム同期しました");
+                }
+            });
+    }catch(e){
+        console.error("StarNexus Realtime start failed:",e);
+        starNexusRealtimeStarted=false;
+    }
+}
+
+function stopStarNexusRealtime(){
+    try{
+        if(starNexusRealtimeChannel && window.stazonSupabase){
+            window.stazonSupabase.removeChannel(starNexusRealtimeChannel);
+        }
+    }catch(e){console.warn("StarNexus Realtime stop failed:",e)}
+    starNexusRealtimeChannel=null;
+    starNexusRealtimeStarted=false;
+}
+
+
+let starNexusRealtimePollTimer=null;
+function startStarNexusRealtimeFallbackPoll(){
+    if(starNexusRealtimePollTimer)return;
+    starNexusRealtimePollTimer=setInterval(async()=>{
+        if(!starNexusOpenWindows().length)return;
+        if(window.stazonSupabase)await starNexusRealtimeRefreshListings();
+    },10000);
+}
+
 async function openStazon(){
     const win=openAppWindow("StarNexus","★","stazon-window");
     win.style.width="900px";
@@ -7303,6 +7429,8 @@ async function openStazon(){
         await stazonCloudSyncInventory();
         await stazonCloudSyncPurchases();
         renderStazon(win,"shop");
+        startStarNexusRealtime();
+        startStarNexusRealtimeFallbackPoll();
     }
 
     return win;
@@ -7562,3 +7690,4 @@ saveFileSystem();
 
 </body>
 </html>
+    

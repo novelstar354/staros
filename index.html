@@ -2199,6 +2199,22 @@ function ensureStarHomeDefaults(){
   ];
   let items=starDesktopLoad(), changed=false;
 
+  // ゴミ箱は常に最初の1個だけ残す。
+  // 旧データや重複追加で複数存在していても、2個目以降はホームから削除する。
+  let trashSeen=false;
+  const dedupedItems=[];
+  items.forEach(item=>{
+    if(item.kind==='trash'){
+      if(trashSeen){
+        changed=true;
+        return;
+      }
+      trashSeen=true;
+    }
+    dedupedItems.push(item);
+  });
+  if(dedupedItems.length!==items.length)items=dedupedItems;
+
   // 未登録の標準アプリを追加する
   const newlyAdded=[];
   defaults.forEach(d=>{
@@ -7346,16 +7362,35 @@ async function starNexusRealtimeRefreshListings(){
 }
 
 async function starNexusRealtimeRefreshChat(listingId){
-    if(!listingId)return;
+    if(!listingId || !window.stazonSupabase)return;
     const id=String(listingId);
     for(const win of starNexusOpenWindows()){
         const active=win.querySelector(".stazon-tab.active")?.dataset.stazonPage;
         if(active!=="chat")continue;
+
         const buttons=[...win.querySelectorAll("[data-trade-thread]")];
         const selected=buttons.find(b=>String(b.dataset.tradeThread)===id);
-        if(selected){
-            await renderStazonChat(win,id);
-        }
+        if(!selected)continue;
+
+        // リアルタイム同期ではチャット全体を再描画しない。
+        // 入力欄を作り直すと、入力中のメッセージが消えてしまうため、
+        // メッセージ一覧だけを更新する。
+        const messagesArea=win.querySelector(".stazon-chat-messages");
+        if(!messagesArea)continue;
+
+        const cloud=await stazonCloudGetTradeMessages(id);
+        if(cloud===null)continue;
+
+        const cache=stazonGetChatCache();
+        cache[id]=cloud;
+        stazonSaveChatCache(cache);
+
+        const me=stazonCurrentUser();
+        messagesArea.innerHTML=cloud.length
+            ? cloud.map(m=>`<div class="stazon-chat-message ${m.sender===me?'mine':''}"><div>${escapeHTML(m.message||'')}</div><div class="stazon-chat-meta">${escapeHTML(m.sender||'')} · ${m.created_at?new Date(m.created_at).toLocaleString('ja-JP'):new Date(m.time||Date.now()).toLocaleString('ja-JP')}</div></div>`).join('')
+            : '<div class="stazon-chat-locked">まだメッセージはありません。<br>取引について出品者にメッセージを送れます。</div>';
+
+        messagesArea.scrollTop=messagesArea.scrollHeight;
     }
 }
 
@@ -7690,4 +7725,3 @@ saveFileSystem();
 
 </body>
 </html>
-    

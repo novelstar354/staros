@@ -6676,6 +6676,7 @@ async function stazonCloudSyncBalance(applyToCommonBalance=false){
     if(!window.stazonSupabase) return {ok:false,error:"Supabaseが接続されていません"};
     const user=stazonCurrentUser();
     try{
+        const localBalance=stazonGetCoins();
         const {data,error}=await window.stazonSupabase
             .from("stazon_balances")
             .select("username,balance")
@@ -6684,25 +6685,22 @@ async function stazonCloudSyncBalance(applyToCommonBalance=false){
         if(error) throw error;
 
         if(!data){
-            const initial=starReadNumber(STAR_COINS_KEY);
             const {error:insertError}=await window.stazonSupabase
                 .from("stazon_balances")
-                .insert({username:user,balance:initial});
+                .insert({username:user,balance:localBalance});
             if(insertError){
                 const retry=await window.stazonSupabase
                     .from("stazon_balances").select("balance")
                     .eq("username",user).maybeSingle();
                 if(retry.error) throw retry.error;
-                const value=Math.max(0,Math.floor(Number(retry.data?.balance??initial)));
+                const value=Math.max(0,Math.floor(Number(retry.data?.balance??localBalance)));
                 if(applyToCommonBalance) stazonSetCoins(value);
                 return {ok:true,balance:value};
             }
-            if(applyToCommonBalance) stazonSetCoins(initial);
-            return {ok:true,balance:initial};
+            return {ok:true,balance:localBalance};
         }
 
         const value=Math.max(0,Math.floor(Number(data.balance)||0));
-        // 重要: 表示・同期だけではStarOS共通残高を変更しない。
         if(applyToCommonBalance) stazonSetCoins(value);
         return {ok:true,balance:value};
     }catch(e){
@@ -6825,14 +6823,12 @@ async function stazonCloudBuyListing(id){
 
         if(error) throw error;
 
-        if(!data || data.ok!==true){
-            return {
-                ok:false,
-                error:data?.error||"購入に失敗しました"
-            };
-        }
-
-        return {ok:true};
+        const result=Array.isArray(data)?data[0]:data;
+        if(result===true || result?.ok===true) return {ok:true};
+        return {
+            ok:false,
+            error:result?.error||"購入に失敗しました"
+        };
 
     }catch(e){
         console.error("Stazon purchase failed:",e);

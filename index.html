@@ -6836,7 +6836,7 @@ async function stazonCloudBuyListing(id){
 
     }catch(e){
         console.error("Stazon purchase failed:",e);
-        return {ok:false,error:"購入処理に失敗しました"};
+        return {ok:false,error:e?.message||e?.details||e?.hint||"購入処理に失敗しました"};
     }
 }
 
@@ -6975,7 +6975,12 @@ async function stazonBuyListing(win,id){
  const owned=stazonListingPurchaseCount(item.id,me);
  const limit=stazonListingLimit(item);
  if(limit!==null && owned>=limit){showToast("この商品は1人"+limit+"個まで購入できます");return}
- const coins=stazonGetCoins();if(coins<item.price){showToast("StarCoinが足りません");return}
+ let coins=stazonGetCoins();
+ if(window.stazonSupabase){
+   const sync=await stazonCloudSyncBalance(false);
+   if(sync.ok){ coins=Math.max(0,Math.floor(Number(sync.balance)||0)); stazonSetCoins(coins); }
+ }
+ if(coins<item.price){showToast("StarCoinが足りません");return}
  const limitText=limit!==null ? "\n購入上限: 1人"+limit+"個\n現在の購入数: "+owned+"個" : "\n購入上限: なし";
  if(!confirm(item.name+"を"+stazonFormat(item.price)+"で購入しますか？\n出品者: "+item.seller+limitText))return;
  if(window.stazonSupabase){
@@ -7268,7 +7273,7 @@ function renderStazon(win,page="shop"){
          ${p.permanent?'<div class="stazon-permanent-badge">恒常商品</div>':''}
          ${stazonListingLimit(p)!==null?`<div class="stazon-limit-info">購入上限: 1人${stazonListingLimit(p)}個 / あなた: ${stazonListingPurchaseCount(p.id,me)}個</div>`:'<div class="stazon-limit-info">購入上限: なし</div>'}
          <div class="stazon-price">${stazonFormat(p.price)}</div>
-         <button class="stazon-buy" data-stazon-listing="${p.id}" ${coins<p.price?'disabled':''}>購入する</button>
+         <button class="stazon-buy" data-stazon-listing="${p.id}">購入する</button>
        </div>
      `).join("")}</div>`:`<div class="stazon-empty">現在、他のユーザーが出品している商品はありません。</div>`}
    `;
@@ -7388,6 +7393,7 @@ async function openStazon(){
     renderStazon(win,"shop");
 
     if(window.stazonSupabase){
+        await stazonCloudSyncBalance(true);
         await stazonCloudSyncListings(null);
         await stazonCloudSyncInventory();
         await stazonCloudSyncPurchases();

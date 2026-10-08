@@ -1584,7 +1584,27 @@ async function starosLoginAccount(username,password){
         if(error)return {ok:false,error};
         const raw=Array.isArray(data)?data[0]:data;
         if(!raw)return {ok:false,error:{message:"ログイン情報が取得できませんでした"}};
-        if(raw.success===false)return {ok:false,error:{message:raw.error||"User IDまたはパスワードが違います"}};
+        if(raw.success===false){
+
+    if(raw.error==="account_banned"){
+        return {
+            ok:false,
+            banned:true,
+            banReason:raw.ban_reason || "BAN理由は設定されていません",
+            bannedAt:raw.banned_at || null,
+            error:{
+                message:"このアカウントはBANされています"
+            }
+        };
+    }
+
+    return {
+        ok:false,
+        error:{
+            message:raw.error || "User IDまたはパスワードが違います"
+        }
+    };
+}
         const profile=raw.profile||raw;
         if(!profile.username)return {ok:false,error:{message:"ログイン情報の形式が正しくありません"}};
         return {ok:true,data:profile};
@@ -1698,9 +1718,22 @@ async function submitAccount(){
 
     const result=await starosLoginAccount(username,password);
     if(!result.ok){
-        error.textContent=/Supabase|接続|network|fetch/i.test(result.error?.message||"")?(result.error?.message||"ログインに失敗しました"):"User IDまたはパスワードが違います";
+
+    if(result.banned){
+        error.textContent =
+            "このアカウントはBANされています\n" +
+            "BAN理由: " +
+            (result.banReason || "BAN理由は設定されていません");
+
         return;
     }
+
+    error.textContent =
+        result.error?.message ||
+        "User IDまたはパスワードが違います";
+
+    return;
+}
     const profile=result.data;
     if(!profile?.username){error.textContent="ログイン情報を取得できませんでした";return;}
     await enterStarOS({id:profile.id||null},profile);

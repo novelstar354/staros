@@ -6648,7 +6648,28 @@ async function stazonCloudSyncBalance(){
             return {ok:true,balance:initial};
         }
 
-        const value=Math.max(0,Math.floor(Number(data.balance)||0));
+        /*
+         * Supabase側が0でも、現在のアカウントに既にローカル残高が
+         * 存在する場合は、それを0で上書きしない。
+         * 旧StarOSから移行した残高を守り、クラウド側も同期する。
+         */
+        const cloudValue=Math.max(0,Math.floor(Number(data.balance)||0));
+        const localBalances=stazonGetBalances();
+        const localValue=Number(localBalances[user]);
+        const globalLocal=Number(localStorage.getItem("starCoins"));
+        const hasLocalAccountBalance=Number.isFinite(localValue)&&localValue>=0&&Object.prototype.hasOwnProperty.call(localBalances,user);
+        const hasLegacyBalance=!hasLocalAccountBalance&&Number.isFinite(globalLocal)&&globalLocal>0;
+
+        let value=cloudValue;
+        if(cloudValue===0 && (hasLocalAccountBalance && localValue>0 || hasLegacyBalance)){
+            value=hasLocalAccountBalance?Math.floor(localValue):Math.floor(globalLocal);
+            const {error:updateError}=await window.stazonSupabase
+                .from("stazon_balances")
+                .update({balance:value})
+                .eq("username",user);
+            if(updateError) throw updateError;
+        }
+
         stazonSetCoins(value);
         return {ok:true,balance:value};
 

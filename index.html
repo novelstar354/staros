@@ -7031,6 +7031,84 @@ async function stazonDeleteListing(win,id){
 
 function stazonGetChatCache(){try{const x=JSON.parse(localStorage.getItem(STAZON_CHAT_CACHE_KEY)||"{}");return x&&typeof x==="object"?x:{};}catch(e){return{};}}
 function stazonSaveChatCache(x){localStorage.setItem(STAZON_CHAT_CACHE_KEY,JSON.stringify(x));}
+
+/* =========================================================
+   STAZON REALTIME TRADE CHAT
+   Supabase Realtimeで新着メッセージを即時反映
+========================================================= */
+let stazonTradeRealtimeChannel=null;
+let stazonTradeRealtimeListingId=null;
+
+function stazonStopTradeRealtime(){
+    if(!stazonTradeRealtimeChannel || !window.stazonSupabase) return;
+    try{
+        window.stazonSupabase.removeChannel(stazonTradeRealtimeChannel);
+    }catch(e){
+        console.warn("Trade realtime channel cleanup failed:",e);
+    }
+    stazonTradeRealtimeChannel=null;
+    stazonTradeRealtimeListingId=null;
+}
+
+function stazonMessageKey(m){
+    return String(m?.id || (String(m?.sender||"")+"|"+String(m?.created_at||"")+"|"+String(m?.message||"")));
+}
+
+function stazonAppendRealtimeMessage(message){
+    const area=document.querySelector(".stazon-content");
+    if(!area || !stazonTradeRealtimeListingId) return;
+    const box=area.querySelector(".stazon-chat-messages");
+    if(!box) return;
+
+    const cache=stazonGetChatCache();
+    const id=String(stazonTradeRealtimeListingId);
+    const list=Array.isArray(cache[id])?cache[id]:[];
+    const key=stazonMessageKey(message);
+    if(list.some(x=>stazonMessageKey(x)===key)) return;
+
+    list.push(message);
+    list.sort((a,b)=>new Date(a.created_at||0)-new Date(b.created_at||0));
+    cache[id]=list;
+    stazonSaveChatCache(cache);
+
+    const me=stazonCurrentUser();
+    const div=document.createElement("div");
+    div.className="stazon-chat-message "+(message.sender===me?"mine":"");
+    div.innerHTML=`<div>${escapeHTML(message.message||"")}</div><div class="stazon-chat-meta">${escapeHTML(message.sender||"")} · ${message.created_at?new Date(message.created_at).toLocaleString("ja-JP"):new Date().toLocaleString("ja-JP")}</div>`;
+    box.appendChild(div);
+    box.querySelector(".stazon-chat-locked")?.remove();
+    box.scrollTop=box.scrollHeight;
+}
+
+function stazonStartTradeRealtime(listingId){
+    if(!window.stazonSupabase) return;
+    const id=String(listingId||"").trim();
+    if(!id) return;
+
+    if(stazonTradeRealtimeChannel && stazonTradeRealtimeListingId===id) return;
+    stazonStopTradeRealtime();
+
+    stazonTradeRealtimeListingId=id;
+    const channelName="stazon-trade-"+id.replace(/[^a-zA-Z0-9_-]/g,"_");
+
+    stazonTradeRealtimeChannel=window.stazonSupabase
+        .channel(channelName)
+        .on(
+            "postgres_changes",
+            {
+                event:"INSERT",
+                schema:"public",
+                table:"staron_trade_messages",
+                filter:"listing_id=eq."+id
+            },
+            payload=>{
+                if(payload?.new) stazonAppendRealtimeMessage(payload.new);
+            }
+        )
+        .subscribe(status=>{
+            console.log("Stazon trade realtime:",status,id);
+        });
+}
 function stazonTradeListings(){
  const me=stazonCurrentUser();
  const listings=stazonGetListings();
@@ -7099,7 +7177,7 @@ async function stazonEnsureTradeChat(listing){
 async function renderStazonChat(win,listingId){
  const area=win.querySelector(".stazon-content");if(!area)return;
  const threads=stazonTradeListings();
- if(!threads.length){area.innerHTML='<div class="stazon-empty">購入済み・販売済みの商品がまだありません。<br>商品を購入すると、ここから出品者とやり取りできます。</div>';return;}
+ if(!threads.length){stazonStopTradeRealtime();area.innerHTML='<div class="stazon-empty">購入済み・販売済みの商品がまだありません。<br>商品を購入すると、ここから出品者とやり取りできます。</div>';return;}
  const selected=threads.find(x=>String(x.id)===String(listingId))||threads[0];
  await stazonEnsureTradeChat(selected);
  let messages=stazonGetChatCache()[selected.id]||[];
@@ -7114,6 +7192,7 @@ async function renderStazonChat(win,listingId){
    </div>
  </div>`;
  const scroll=area.querySelector('.stazon-chat-messages');if(scroll)scroll.scrollTop=scroll.scrollHeight;
+ stazonStartTradeRealtime(selected.id);
  area.querySelectorAll('[data-trade-thread]').forEach(b=>b.onclick=()=>renderStazonChat(win,b.dataset.tradeThread));
  let sending=false;
  const send=async()=>{

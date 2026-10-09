@@ -2070,6 +2070,7 @@ document.addEventListener("keydown",e=>{
     if(e.key==="Enter"&&document.getElementById("starRecoveryOverlay")?.classList.contains("show"))resetStarPassword();
 });
 
+
 /* =========================================================
    CLOCK
 ========================================================= */
@@ -7216,10 +7217,15 @@ async function renderStazonChat(win,listingId){
  let messages=stazonGetChatCache()[selected.id]||[];
  if(window.stazonSupabase){const cloud=await stazonCloudGetTradeMessages(selected.id);if(cloud!==null){messages=cloud;const cache=stazonGetChatCache();cache[selected.id]=messages;stazonSaveChatCache(cache);}}
  const me=stazonCurrentUser();
+ // 選択中の取引ごとに、ログインユーザーではない相手のUser IDを計算する。
+ const tradePartnerId=item=>String(item?.seller||'')===String(me||'')
+   ? String(item?.buyer||'不明')
+   : String(item?.seller||'不明');
+ const selectedPartnerId=tradePartnerId(selected);
  area.innerHTML=`<div class="stazon-chat-layout">
-   <div class="stazon-chat-list">${threads.map(x=>`<button class="stazon-chat-thread ${x.id===selected.id?'active':''}" data-trade-thread="${escapeHTML(x.id)}"><b>${escapeHTML(x.name)}</b><small>${x.seller===me?'購入者: '+escapeHTML(x.buyer||'不明'):'出品者: '+escapeHTML(x.seller||'不明')}</small></button>`).join('')}</div>
+   <div class="stazon-chat-list">${threads.map(x=>`<button class="stazon-chat-thread ${String(x.id)===String(selected.id)?'active':''}" data-trade-thread="${escapeHTML(x.id)}"><b>${escapeHTML(x.name)}</b><small>相手のID: ${escapeHTML(tradePartnerId(x))}</small></button>`).join('')}</div>
    <div class="stazon-chat-main">
-     <div class="stazon-chat-head"><b>${escapeHTML(selected.name)}</b><div style="font-size:10px;color:#7187a5;margin-top:4px">${selected.seller===me?'購入者: '+escapeHTML(selected.buyer||'不明'):'出品者: '+escapeHTML(selected.seller||'不明')}</div></div>
+     <div class="stazon-chat-head"><b>${escapeHTML(selected.name)}</b><div style="font-size:10px;color:#7187a5;margin-top:4px">相手のID: ${escapeHTML(selectedPartnerId)}</div></div>
      <div class="stazon-chat-messages">${messages.length?messages.map(m=>`<div class="stazon-chat-message ${m.sender===me?'mine':''}"><div>${escapeHTML(m.message||'')}</div><div class="stazon-chat-meta">${escapeHTML(m.sender||'')} · ${m.created_at?new Date(m.created_at).toLocaleString('ja-JP'):new Date(m.time||Date.now()).toLocaleString('ja-JP')}</div></div>`).join(''):'<div class="stazon-chat-locked">まだメッセージはありません。<br>取引について出品者にメッセージを送れます。</div>'}</div>
      <div class="stazon-chat-compose"><input class="stazon-chat-input" id="stazonChatInput" maxlength="1000" placeholder="出品者へのメッセージ…"><button class="stazon-chat-send" id="stazonChatSend">送信</button></div>
    </div>

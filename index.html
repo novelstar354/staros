@@ -2113,6 +2113,8 @@ const STAR_TRASH_KEY='staros_desktop_trash_v1';
 
 function starDesktopLoad(){try{const v=JSON.parse(localStorage.getItem(STAR_HOME_DESKTOP_KEY)||'[]');return Array.isArray(v)?v:[]}catch{return[]}}
 function starDesktopSave(v){localStorage.setItem(STAR_HOME_DESKTOP_KEY,JSON.stringify(v))}
+// ゴミ箱を表す旧形式のアイコンも判定し、ホーム画面には1個だけ置く。
+function isStarTrashShortcut(item){return !!item&&(item.kind==='trash'||(item.kind==='app'&&item.app==='trash')||(item.name==='ゴミ箱'&&item.icon==='🗑️'));}
 function starTrashLoad(){try{const v=JSON.parse(localStorage.getItem(STAR_TRASH_KEY)||'[]');return Array.isArray(v)?v:[]}catch{return[]}}
 function starTrashSave(v){localStorage.setItem(STAR_TRASH_KEY,JSON.stringify(v))}
 
@@ -2207,8 +2209,16 @@ function addStarDesktopFilePrompt(){
   if(addStarDesktopFilePath(clean.join('/'))) closeStarDesktopContext();
 }
 function addStarDesktopTrash(){
-  const items=starDesktopLoad();
-  if(items.some(x=>x.kind==='trash')){showToast('ゴミ箱は既にあります');return}
+  let items=starDesktopLoad();
+  const trashIndexes=[];
+  items.forEach((item,i)=>{if(isStarTrashShortcut(item))trashIndexes.push(i)});
+  if(trashIndexes.length){
+    // 既存のゴミ箱を正規形式に統一し、2個目以降は除去する。
+    const first=items[trashIndexes[0]];
+    first.kind='trash';first.icon='🗑️';first.name='ゴミ箱';delete first.app;
+    items=items.filter((item,i)=>!isStarTrashShortcut(item)||i===trashIndexes[0]);
+    starDesktopSave(items);renderStarDesktopItems();closeStarDesktopContext();showToast('ゴミ箱は既にあります');return;
+  }
   const pos=starDesktopFindFreePosition();
   items.push({kind:'trash',icon:'🗑️',name:'ゴミ箱',x:pos.x,y:pos.y,desktop:1});
   starDesktopSave(items); renderStarDesktopItems(); closeStarDesktopContext(); showToast('ゴミ箱をホーム画面に追加しました');
@@ -2249,7 +2259,26 @@ function restoreStarTrash(index){
 }
 function permanentStarTrash(index){
   const trash=starTrashLoad(); if(!trash[index])return;
-  trash.splice(index,1); starTrashSave(trash); openStarTrash(); showToast('ゴミ箱から完全に削除しました');
+  trash.splice(index,1);
+  starTrashSave(trash);
+  // 完全削除後も、ホーム画面のゴミ箱ショートカットは1個だけに正規化して保存する。
+  let home=starDesktopLoad();
+  const seen=new Set();
+  home=home.filter(item=>{
+    if(!isStarTrashShortcut(item))return true;
+    if(seen.has('trash'))return false;
+    seen.add('trash');
+    item.kind='trash';item.name='ゴミ箱';item.icon='🗑️';delete item.app;
+    return true;
+  });
+  if(!seen.has('trash')){
+    const pos={x:18,y:18};
+    home.push({kind:'trash',icon:'🗑️',name:'ゴミ箱',x:pos.x,y:pos.y,desktop:1});
+  }
+  starDesktopSave(home);
+  openStarTrash();
+  renderStarDesktopItems();
+  showToast('ゴミ箱から完全に削除しました');
 }
 
 function ensureStarHomeDefaults(){
@@ -2260,28 +2289,31 @@ function ensureStarHomeDefaults(){
   ];
   let items=starDesktopLoad(), changed=false;
 
-  // ゴミ箱は常に最初の1個だけ残す。
-  // 旧データや重複追加で複数存在していても、2個目以降はホームから削除する。
+  // ゴミ箱は常に1個だけ。旧形式（kind:'app', app:'trash' など）も統一する。
   let trashSeen=false;
   const dedupedItems=[];
   items.forEach(item=>{
-    if(item.kind==='trash'){
-      if(trashSeen){
-        changed=true;
-        return;
-      }
+    if(isStarTrashShortcut(item)){
+      if(trashSeen){changed=true;return;}
       trashSeen=true;
+      if(item.kind!=='trash'||item.name!=='ゴミ箱'||item.icon!=='🗑️'||item.app){
+        item.kind='trash';item.name='ゴミ箱';item.icon='🗑️';delete item.app;changed=true;
+      }
     }
     dedupedItems.push(item);
   });
-  if(dedupedItems.length!==items.length)items=dedupedItems;
+  if(dedupedItems.length!==items.length){
+    // 重複を見つけたら必ず保存対象にする（保存しないと再描画のたびに復活する）。
+    items=dedupedItems;
+    changed=true;
+  }
 
   // 未登録の標準アプリを追加する
   const newlyAdded=[];
   defaults.forEach(d=>{
     const exists=items.some(x =>
       d[0]==='trash'
-        ? x.kind==='trash'
+        ? isStarTrashShortcut(x)
         : x.kind==='app' && x.app===d[0]
     );
     if(!exists) newlyAdded.push(d);

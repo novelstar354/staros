@@ -1,4 +1,4 @@
-//Ban
+-- Ban
 UPDATE public.staros_accounts
 SET
     is_banned = true,
@@ -13,7 +13,7 @@ WHERE user_id = (
     WHERE username = 'ユーザー名'
 );
 
-//解除
+-- 解除
 UPDATE public.staros_accounts
 SET
     is_banned = false,
@@ -21,7 +21,7 @@ SET
     ban_reason = NULL
 WHERE username = 'ユーザー名';
 
-//ban一覧
+-- ban一覧
 SELECT
     username AS "ユーザーネーム",
     display_name AS "表示名",
@@ -32,7 +32,7 @@ FROM public.staros_accounts
 WHERE is_banned = true
 ORDER BY banned_at DESC;
 
-//一覧　ban,noramal含む
+-- 一覧　ban,noramal含む
 SELECT
     username AS "ユーザーネーム",
     display_name AS "表示名",
@@ -43,3 +43,10 @@ SELECT
     created_at AS "登録日時"
 FROM public.staros_accounts
 ORDER BY created_at ASC;
+
+-- 再設定
+SELECT public.staros_admin_reset_password(
+    'ここに管理者キー',
+    '対象のUser ID',
+    '新しいパスワード'
+);

@@ -44,6 +44,29 @@ SELECT
 FROM public.staros_accounts
 ORDER BY created_at ASC;
 
+
+SELECT
+    a.username AS "ユーザーネーム",
+    a.display_name AS "表示名",
+    'STAR-' || LPAD(
+        ROW_NUMBER() OVER (ORDER BY a.created_at)::text,
+        6,
+        '0'
+    ) AS "StarID",
+    a.id AS "userID",
+    a.password_hash AS "password hash",
+    s.last_login AS "最終ログイン日時"
+FROM public.staros_accounts AS a
+LEFT JOIN (
+    SELECT
+        user_id,
+        MAX(created_at) AS last_login
+    FROM public.staros_sessions
+    GROUP BY user_id
+) AS s
+    ON s.user_id = a.id
+ORDER BY a.created_at;
+
 -- 再設定
 SELECT public.staros_admin_reset_password(
     'ここに管理者キー',

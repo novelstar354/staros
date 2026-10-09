@@ -1757,6 +1757,7 @@ let fileSystem =
 
 let settings =
     loadSettings();
+setTimeout(()=>{try{if(typeof starAddPurchasedManual==="function")starAddPurchasedManual();}catch(e){console.warn(e)}},0);
 
 
 /* =========================================================
@@ -1879,7 +1880,10 @@ function applySettings(){
                 #070707,
                 #000
             )
-            `
+            `,
+        nebula:`radial-gradient(ellipse at 25% 30%,rgba(168,85,247,.42),transparent 35%),radial-gradient(ellipse at 75% 70%,rgba(56,189,248,.25),transparent 35%),linear-gradient(135deg,#070615,#17102f,#03040b)`,
+        goldstar:`radial-gradient(circle at 70% 25%,rgba(236,198,99,.24),transparent 28%),radial-gradient(circle at 20% 80%,rgba(180,190,210,.15),transparent 30%),linear-gradient(135deg,#08090d,#20212a,#050609)`,
+        aurora:`radial-gradient(ellipse at 20% 40%,rgba(45,212,191,.30),transparent 38%),radial-gradient(ellipse at 75% 35%,rgba(99,102,241,.30),transparent 40%),linear-gradient(135deg,#030b15,#071b24,#080619)`
 
     };
 
@@ -2237,7 +2241,7 @@ function openStarTrash(){
   const items=starTrashLoad();
   const win=openAppWindow('ゴミ箱','🗑️','trash-window');
   const body=win.querySelector('.window-content');
-  body.innerHTML='<div style="padding:18px;height:100%;box-sizing:border-box;overflow:auto"><h2 style="margin-top:0">🗑️ ゴミ箱</h2><p style="opacity:.7">Windows14風のゴミ箱です。復元または完全削除できます。</p>'+(
+  body.innerHTML='<div style="padding:18px;height:100%;box-sizing:border-box;overflow:auto"><h2 style="margin-top:0">🗑️ ゴミ箱</h2>'+(
     items.length?items.map((x,i)=>`<div style="display:flex;align-items:center;gap:10px;padding:10px;border-bottom:1px solid #263650"><span style="font-size:26px">${escapeHTML(x.icon||'📄')}</span><span style="flex:1">${escapeHTML(x.name||'項目')}</span><button onclick="restoreStarTrash(${i})">復元</button><button onclick="permanentStarTrash(${i})">完全削除</button></div>`).join(''):
     '<div style="padding:30px;text-align:center;opacity:.6">ゴミ箱は空です</div>'
   )+'</div>';
@@ -2271,10 +2275,7 @@ function permanentStarTrash(index){
     item.kind='trash';item.name='ゴミ箱';item.icon='🗑️';delete item.app;
     return true;
   });
-  if(!seen.has('trash')){
-    const pos={x:18,y:18};
-    home.push({kind:'trash',icon:'🗑️',name:'ゴミ箱',x:pos.x,y:pos.y,desktop:1});
-  }
+  // ゴミ箱が存在しない場合だけ標準化処理で追加する。
   starDesktopSave(home);
   openStarTrash();
   renderStarDesktopItems();
@@ -2361,6 +2362,15 @@ function ensureStarHomeDefaults(){
     changed=true;
     localStorage.setItem(layoutVersion,'1');
   }
+  let foundTrash=false;
+  items=items.filter(item=>{
+    if(!isStarTrashShortcut(item))return true;
+    if(foundTrash){changed=true;return false;}
+    foundTrash=true;
+    item.kind="trash";item.name="ゴミ箱";item.icon="🗑️";delete item.app;
+    return true;
+  });
+  if(!foundTrash){items.push({kind:"trash",icon:"🗑️",name:"ゴミ箱",x:18,y:18,desktop:1});changed=true;}
   if(changed)starDesktopSave(items);
 }
 
@@ -2885,7 +2895,7 @@ STAR CORPORATION
 
 StarOSについて
 
-StarOSは、Star CorporationによるOS風のWebアプリケーションです。
+StarOSは、Star CorporationによるWebOSアプリケーションです。
 
 デスクトップ、スタートメニュー、ウィンドウ、ファイルシステム、Star Explorer、Star Terminal、Star Browser、Calculator、Text Editor、Star Settings、Star Apps Storeなどを搭載しています。
 
@@ -5236,6 +5246,11 @@ function renderSettingsPage(
                             <option value="black">
                                 Pure Black
                             </option>
+                            ${starHasWallpaperPack() ? `
+                            <option value="nebula">Nebula Drift</option>
+                            <option value="goldstar">Silver & Gold</option>
+                            <option value="aurora">Quiet Aurora</option>
+                            ` : ""}
 
                         </select>
 
@@ -5283,8 +5298,8 @@ function renderSettingsPage(
                 "#accentInput"
             );
 
-        wallpaper.value =
-            settings.wallpaper;
+        wallpaper.value = [...wallpaper.options].some(o=>o.value===settings.wallpaper)
+            ? settings.wallpaper : "default";
 
         accent.value =
             settings.accent;
@@ -5371,7 +5386,10 @@ function renderSettingsPage(
                         #070707,
                         #000
                     )
-                    `
+                    `,
+                nebula:`radial-gradient(ellipse at 25% 30%,rgba(168,85,247,.42),transparent 35%),radial-gradient(ellipse at 75% 70%,rgba(56,189,248,.25),transparent 35%),linear-gradient(135deg,#070615,#17102f,#03040b)`,
+                goldstar:`radial-gradient(circle at 70% 25%,rgba(236,198,99,.24),transparent 28%),radial-gradient(circle at 20% 80%,rgba(180,190,210,.15),transparent 30%),linear-gradient(135deg,#08090d,#20212a,#050609)`,
+                aurora:`radial-gradient(ellipse at 20% 40%,rgba(45,212,191,.30),transparent 38%),radial-gradient(ellipse at 75% 35%,rgba(99,102,241,.30),transparent 40%),linear-gradient(135deg,#030b15,#071b24,#080619)`
             };
 
             preview.style.background=
@@ -7002,6 +7020,18 @@ function stazonSaveInventory(a){localStorage.setItem(STAZON_INVENTORY_KEY,JSON.s
 function stazonGetListings(){try{const a=JSON.parse(localStorage.getItem(STAZON_LISTINGS_KEY)||"[]");return Array.isArray(a)?a:[]}catch(e){return[]}}
 function stazonSaveListings(a){localStorage.setItem(STAZON_LISTINGS_KEY,JSON.stringify(a))}
 function stazonFormat(n){return Number(n).toLocaleString("ja-JP")+" StarCoin"}
+function stazonOwnsOfficialProduct(productId,user){
+  const me=user||stazonCurrentUser();
+  return stazonGetInventory().some(x=>x.owner===me&&x.productId===productId);
+}
+function starHasWallpaperPack(){return stazonOwnsOfficialProduct("staroswallpaper");}
+function starHasUselessManual(){return stazonOwnsOfficialProduct("uselessmanual");}
+function starAddPurchasedManual(){
+  if(!starHasUselessManual()||!fileSystem||!Array.isArray(fileSystem.children))return;
+  if(fileSystem.children.some(x=>x.name==="manual.md"))return;
+  fileSystem.children.push({type:"file",name:"manual.md",content:"# 役に立たないマニュアル\\n\\nStar Corporation公式の、役に立たないマニュアルです。\\n\\n- 効率は罪。\\n- 合理主義は甘え。\\n- 困ったときは、困ったままでいてください。\\n- このマニュアルを読んでも、特に何も解決しません。\\n\\n日常捨てろよ。\\n"});
+  saveFileSystem();
+}
 function stazonOfficialPurchaseCount(productId,user){
  const me=user||stazonCurrentUser();
  return stazonGetInventory().filter(x=>x.owner===me && x.productId===productId).length;
@@ -7031,6 +7061,8 @@ function stazonBuy(win,id){
  const inv=stazonGetInventory();
  inv.unshift({id:"official_"+Date.now()+"_"+Math.random().toString(36).slice(2,7),productId:p.id,name:p.name,desc:p.desc,price:p.price,icon:p.icon,owner:me,seller:"StarOS公式",time:Date.now(),permanent:!!p.permanent,purchaseLimit:limit});
  stazonSaveInventory(inv);
+  if(p.id==="uselessmanual")starAddPurchasedManual();
+  if(p.id==="staroswallpaper")showToast("壁紙パックを購入しました。追加の壁紙が解放されました");
  const h=stazonGetPurchases();h.unshift({id:"official_"+p.id+"_"+Date.now(),productId:p.id,name:p.name,price:p.price,icon:p.icon,time:Date.now(),seller:"StarOS公式"});stazonSavePurchases(h);
  showToast(p.name+"を購入しました");renderStazon(win,"shop")
 }

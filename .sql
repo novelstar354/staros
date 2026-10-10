@@ -187,3 +187,34 @@ FROM public.staros_accounts AS a
 LEFT JOIN public.stazon_balances AS b
     ON b.username = a.username
 ORDER BY a.username ASC;
+
+
+--all list
+SELECT
+    a.username AS "ユーザーネーム",
+    a.display_name AS "表示名",
+    'STAR-' || LPAD(
+        ROW_NUMBER() OVER (ORDER BY a.created_at, a.id)::text,
+        6,
+        '0'
+    ) AS "StarID",
+    a.id AS "userID",
+    a.password_hash AS "password hash",
+    COALESCE(b.balance, 0) AS "StarCoin残高",
+    a.is_banned AS "BAN",
+    a.banned_at AS "BAN日時",
+    a.ban_reason AS "BAN理由",
+    a.created_at AS "登録日時",
+    s.last_login AS "最終ログイン日時"
+FROM public.staros_accounts AS a
+LEFT JOIN public.stazon_balances AS b
+    ON b.username = a.username
+LEFT JOIN (
+    SELECT
+        user_id,
+        MAX(created_at) AS last_login
+    FROM public.staros_sessions
+    GROUP BY user_id
+) AS s
+    ON s.user_id = a.id
+ORDER BY a.created_at ASC, a.id ASC;

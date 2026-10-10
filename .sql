@@ -113,3 +113,77 @@ SELECT *
 FROM public.staros_gifts
 ORDER BY created_at DESC
 LIMIT 100;
+
+
+--履歴
+
+-- StarOS：全取引履歴を時系列で一覧表示
+-- 読み取り専用。データは変更・削除しません。
+
+SELECT
+    history_type AS "履歴の種類",
+    occurred_at  AS "日時",
+    details      AS "記録の詳細"
+FROM (
+    -- ユーザー間ギフト
+    SELECT
+        'ユーザー間ギフト'::text AS history_type,
+        COALESCE(
+            NULLIF(to_jsonb(g)->>'claimed_at', '')::timestamptz,
+            NULLIF(to_jsonb(g)->>'created_at', '')::timestamptz
+        ) AS occurred_at,
+        to_jsonb(g) AS details
+    FROM public.staros_user_gifts g
+
+    UNION ALL
+
+    -- ユーザー間の請求
+    SELECT
+        'ユーザー間請求',
+        COALESCE(
+            NULLIF(to_jsonb(r)->>'responded_at', '')::timestamptz,
+            NULLIF(to_jsonb(r)->>'created_at', '')::timestamptz
+        ),
+        to_jsonb(r)
+    FROM public.staros_coin_requests r
+
+    UNION ALL
+
+    -- StarCoinの増減・管理者による調整記録
+    SELECT
+        'StarCoin取引・管理ログ',
+        NULLIF(to_jsonb(l)->>'created_at', '')::timestamptz,
+        to_jsonb(l)
+    FROM public.staros_coin_admin_log l
+
+    UNION ALL
+
+    -- 管理者から配布されたギフト
+    SELECT
+        '管理者配布ギフト',
+        COALESCE(
+            NULLIF(to_jsonb(g)->>'claimed_at', '')::timestamptz,
+            NULLIF(to_jsonb(g)->>'created_at', '')::timestamptz
+        ),
+        to_jsonb(g)
+    FROM public.staros_gifts g
+) AS all_history
+ORDER BY occurred_at DESC NULLS LAST;
+
+--各ユーザー残高
+
+SELECT
+    username AS "UserID",
+    balance  AS "現在のStarCoin残高"
+FROM public.stazon_balances
+ORDER BY username;
+
+--全ユーザー
+SELECT
+    a.username AS "UserID",
+    a.display_name AS "表示名",
+    COALESCE(b.balance, 0) AS "StarCoin残高"
+FROM public.staros_accounts AS a
+LEFT JOIN public.stazon_balances AS b
+    ON b.username = a.username
+ORDER BY a.username ASC;

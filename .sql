@@ -1,4 +1,4 @@
-e-- Ban
+-- Ban
 UPDATE public.staros_accounts
 SET
     is_banned = true,
@@ -117,8 +117,6 @@ LIMIT 100;
 
 --履歴
 
--- StarOS：全取引履歴を時系列で一覧表示
--- 読み取り専用。データは変更・削除しません。
 
 SELECT
     history_type AS "履歴の種類",

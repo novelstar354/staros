@@ -1246,6 +1246,18 @@ body.staros-light .window-title{color:#172033}.body.staros-light{}
 .stargift-status{min-height:20px;margin:10px 0;color:#9fb0c8;font-size:12px;white-space:pre-wrap}.stargift-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px}.stargift-card{padding:16px;border:1px solid rgba(205,190,135,.16);border-radius:13px;background:rgba(255,255,255,.03);display:flex;flex-direction:column;min-height:190px}.stargift-card-icon{font-size:31px}.stargift-card-title{font-size:14px;font-weight:800;margin-top:9px}.stargift-card-reason{font-size:12px;color:#91a0b6;line-height:1.55;margin-top:6px;flex:1;overflow-wrap:anywhere}.stargift-card-amount{font-size:21px;font-weight:850;color:#f1df9a;margin:12px 0}.stargift-card-date{font-size:10px;color:#71839d;margin-bottom:10px}.stargift-empty{padding:30px 12px;text-align:center;color:#8192ad;border:1px dashed rgba(205,190,135,.18);border-radius:12px;grid-column:1/-1}.stargift-foot{font-size:10px;color:#687c98;line-height:1.6;margin-top:15px}
 @media(max-width:600px){.stargift-top{align-items:flex-start;padding:13px}.stargift-balance{padding:8px}.stargift-main{padding:12px}.stargift-auth{grid-template-columns:1fr}.stargift-auth .stargift-button{min-height:42px}}
 
+
+/* Star Gift: user-to-user transfer and charge request controls */
+.stargift-peer-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:14px 0 20px}
+.stargift-action-card{padding:16px;border:1px solid rgba(205,190,135,.16);border-radius:13px;background:rgba(255,255,255,.025);min-width:0}
+.stargift-action-card h3{margin:0 0 7px;font-size:15px}.stargift-action-card p{font-size:11px;line-height:1.55;color:#8798b2;min-height:42px}
+.stargift-action-card label{display:block;font-size:11px;color:#aab8ce;margin:10px 0 5px}
+.stargift-action-card .stargift-button{width:100%;margin-top:12px}
+.stargift-section-title{font-size:14px;margin:20px 0 10px;color:#e4d7a4}
+.stargift-secondary{border:1px solid #46556d;background:#172235;color:#dce6f5;border-radius:9px;padding:9px 12px;cursor:pointer;margin-top:8px}
+.stargift-secondary:hover{background:#223149}
+@media(max-width:650px){.stargift-peer-actions{grid-template-columns:1fr}.stargift-action-card p{min-height:0}}
+
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
@@ -7678,66 +7690,204 @@ function renderStarGift(win){
     content.innerHTML=`
       <div class="stargift-app">
         <div class="stargift-top">
-          <div class="stargift-brand"><div class="stargift-logo">★</div><div><div class="stargift-title">Star Gift</div><div class="stargift-sub">A LITTLE STAR FOR YOU</div></div></div>
+          <div class="stargift-brand"><div class="stargift-logo">★</div><div><div class="stargift-title">Star Gift</div><div class="stargift-sub">GIFTS & COIN REQUESTS</div></div></div>
           <div class="stargift-balance"><small>現在のStarCoin</small><b id="stargiftBalance">${stazonGetCoins().toLocaleString("ja-JP")} SC</b></div>
         </div>
         <div class="stargift-main">
           <div class="stargift-hero">
-            <h2>🎁 ギフトボックス</h2>
-            <p><b>@${escapeHTML(username)}</b> 宛てのStarCoinギフトを確認して受け取れます。受取にはStarOSアカウントのパスワード確認が必要です。</p>
+            <h2>🎁 ギフト・請求</h2>
+            <p>ログイン中：<b>@${escapeHTML(username)}</b>。User IDを指定してギフトを送ったり、StarCoinを請求したりできます。請求は相手が承諾したときだけ送金が成立します。</p>
             <div class="stargift-auth">
               <input class="stargift-input" id="stargiftPassword" type="password" autocomplete="current-password" placeholder="StarOSアカウントのパスワード">
-              <button class="stargift-button" id="stargiftLoad">ギフトを確認</button>
+              <button class="stargift-button" id="stargiftLoad">受信・履歴を更新</button>
             </div>
-            <div class="stargift-status" id="stargiftStatus" role="status">パスワードを入力して「ギフトを確認」を押してください。</div>
+            <div class="stargift-status" id="stargiftStatus" role="status">操作にはStarOSアカウントのパスワードが必要です。</div>
           </div>
-          <div class="stargift-list" id="stargiftList"><div class="stargift-empty">ギフト一覧はまだ読み込まれていません。</div></div>
-          <div class="stargift-foot">ギフトは受取操作が完了するまで残高に加算されません。同じギフトは一度だけ受け取れます。受取後はStarCoin残高が更新されます。</div>
+          <div class="stargift-peer-actions">
+            <section class="stargift-action-card">
+              <h3>🎁 User IDにギフトを送る</h3>
+              <p>送信時に自分の残高から差し引かれ、相手が受け取ると相手の残高に加算されます。</p>
+              <label>相手のUser ID</label><input class="stargift-input" id="stargiftRecipient" maxlength="100" placeholder="例: staruser02">
+              <label>金額（StarCoin）</label><input class="stargift-input" id="stargiftSendAmount" type="number" min="1" step="1" placeholder="100">
+              <label>メッセージ（任意）</label><input class="stargift-input" id="stargiftSendReason" maxlength="500" placeholder="ありがとう！">
+              <button class="stargift-button" id="stargiftSendButton">ギフトを送る</button>
+            </section>
+            <section class="stargift-action-card">
+              <h3>🧾 User IDに請求する</h3>
+              <p>相手に支払いリクエストを送ります。相手が承諾すると相手の残高から差し引かれ、あなたに加算されます。</p>
+              <label>請求先のUser ID</label><input class="stargift-input" id="stargiftPayer" maxlength="100" placeholder="例: staruser02">
+              <label>金額（StarCoin）</label><input class="stargift-input" id="stargiftRequestAmount" type="number" min="1" step="1" placeholder="100">
+              <label>請求理由（任意）</label><input class="stargift-input" id="stargiftRequestReason" maxlength="500" placeholder="共同購入分">
+              <button class="stargift-button" id="stargiftRequestButton">支払いを請求</button>
+            </section>
+          </div>
+          <h3 class="stargift-section-title">📥 受信したギフト</h3>
+          <div class="stargift-list" id="stargiftList"><div class="stargift-empty">「受信・履歴を更新」を押してください。</div></div>
+          <h3 class="stargift-section-title">🎁 ユーザーからのギフト</h3>
+          <div class="stargift-list" id="stargiftPeerList"><div class="stargift-empty">未読み込み</div></div>
+          <h3 class="stargift-section-title">🧾 あなた宛ての請求（承諾・拒否）</h3>
+          <div class="stargift-list" id="stargiftRequestList"><div class="stargift-empty">未読み込み</div></div>
+          <h3 class="stargift-section-title">📤 あなたが送った請求</h3>
+          <div class="stargift-list" id="stargiftOutgoingList"><div class="stargift-empty">未読み込み</div></div>
+          <h3 class="stargift-section-title">🎀 送ったギフトの履歴</h3>
+          <div class="stargift-list" id="stargiftSentList"><div class="stargift-empty">未読み込み</div></div>
+          <div class="stargift-foot">ギフト送信は送信時に残高から差し引かれます。請求は相手が承諾するまで残高は動きません。残高不足の場合、送金・承諾は成立しません。</div>
         </div>
       </div>`;
-    const pass=content.querySelector("#stargiftPassword");
-    const load=content.querySelector("#stargiftLoad");
-    load.onclick=()=>starGiftLoad(win);
-    pass.addEventListener("keydown",e=>{if(e.key==="Enter")starGiftLoad(win)});
+    content.querySelector("#stargiftLoad").onclick=()=>starGiftLoad(win);
+    content.querySelector("#stargiftSendButton").onclick=()=>starGiftSendToUser(win);
+    content.querySelector("#stargiftRequestButton").onclick=()=>starGiftRequestPayment(win);
+    content.querySelector("#stargiftPassword").addEventListener("keydown",e=>{if(e.key==="Enter")starGiftLoad(win)});
+}
+async function starGiftRpcResult(name,args){
+    if(!window.stazonSupabase)throw new Error("Supabaseに接続されていません");
+    const {data,error}=await window.stazonSupabase.rpc(name,args);
+    if(error)throw error;
+    let result=Array.isArray(data)?data[0]:data;
+    if(typeof result==="string"){try{result=JSON.parse(result)}catch(e){}}
+    if(!result || result.success!==true)throw new Error(result?.error||"処理に失敗しました");
+    return result;
+}
+function starGiftSafeDate(value){try{return value?new Date(value).toLocaleString("ja-JP"):""}catch(e){return ""}}
+function starGiftSetBalance(balance){
+    const n=Math.max(0,Math.floor(Number(balance)||0));
+    stazonSetCoins(n);
+    document.querySelectorAll("#stargiftBalance").forEach(el=>el.textContent=n.toLocaleString("ja-JP")+" SC");
+    document.querySelectorAll(".stazon-window .stazon-balance-value").forEach(el=>el.textContent=n.toLocaleString("ja-JP")+" SC");
 }
 async function starGiftLoad(win){
     const content=win?.querySelector(".window-content");
     if(!content || !window.stazonSupabase)return;
     const password=content.querySelector("#stargiftPassword")?.value||"";
     const status=content.querySelector("#stargiftStatus");
-    const list=content.querySelector("#stargiftList");
     const btn=content.querySelector("#stargiftLoad");
     if(!password){status.textContent="パスワードを入力してください。";return;}
-    btn.disabled=true;status.textContent="ギフトを確認しています…";list.innerHTML="";
+    btn.disabled=true;status.textContent="受信内容を確認しています…";
     try{
-        const {data,error}=await window.stazonSupabase.rpc("staros_list_my_gifts",{
-            p_username:stazonCurrentUser(),p_password:password
-        });
-        if(error)throw error;
-        let result=Array.isArray(data)?data[0]:data;
-        if(typeof result==="string"){try{result=JSON.parse(result)}catch(e){}}
-        if(!result || result.success!==true)throw new Error(result?.error||"ギフト一覧を取得できませんでした");
-        const gifts=Array.isArray(result.gifts)?result.gifts:[];
-        if(!gifts.length){
-            list.innerHTML='<div class="stargift-empty">受取待ちのギフトはありません。新しいギフトが届いたらここに表示されます。</div>';
-            status.textContent="確認完了：受取待ちギフトはありません。";
-        }else{
-            list.innerHTML=gifts.map(g=>`<article class="stargift-card" data-gift-id="${escapeHTML(g.id)}">
-              <div class="stargift-card-icon">🎁</div><div class="stargift-card-title">StarCoinギフト</div>
+        const username=stazonCurrentUser();
+        // StarOS管理配布ギフト（従来機能）
+        try{
+            const admin=await starGiftRpcResult("staros_list_my_gifts",{p_username:username,p_password:password});
+            const gifts=Array.isArray(admin.gifts)?admin.gifts:[];
+            const list=content.querySelector("#stargiftList");
+            list.innerHTML=gifts.length?gifts.map(g=>`<article class="stargift-card">
+              <div class="stargift-card-icon">🎁</div><div class="stargift-card-title">StarOSからのギフト</div>
               <div class="stargift-card-reason">${escapeHTML(g.reason||"StarOSからのギフト")}</div>
               <div class="stargift-card-amount">＋${Number(g.amount||0).toLocaleString("ja-JP")} SC</div>
-              <div class="stargift-card-date">${g.created_at?new Date(g.created_at).toLocaleString("ja-JP"):""}</div>
+              <div class="stargift-card-date">${starGiftSafeDate(g.created_at)}</div>
               <button class="stargift-button" data-claim-gift="${escapeHTML(g.id)}">受け取る</button>
-            </article>`).join("");
+            </article>`).join(""):'<div class="stargift-empty">StarOSからの受取待ちギフトはありません。</div>';
             list.querySelectorAll("[data-claim-gift]").forEach(b=>b.onclick=()=>starGiftClaim(win,b.dataset.claimGift));
-            status.textContent=`受取待ちギフト：${gifts.length}件`;
+        }catch(e){
+            content.querySelector("#stargiftList").innerHTML='<div class="stargift-empty">管理者ギフトを読み込めませんでした。SQL設定を確認してください。</div>';
         }
+        const data=await starGiftRpcResult("staros_user_gift_list",{p_username:username,p_password:password});
+        const peerGifts=Array.isArray(data.gifts)?data.gifts:[];
+        const requests=Array.isArray(data.incoming_requests)?data.incoming_requests:[];
+        const outgoing=Array.isArray(data.outgoing_requests)?data.outgoing_requests:[];
+        const sent=Array.isArray(data.sent_gifts)?data.sent_gifts:[];
+        const peerList=content.querySelector("#stargiftPeerList");
+        peerList.innerHTML=peerGifts.length?peerGifts.map(g=>`<article class="stargift-card">
+          <div class="stargift-card-icon">🎁</div><div class="stargift-card-title">@${escapeHTML(g.sender_username)} からのギフト</div>
+          <div class="stargift-card-reason">${escapeHTML(g.reason||"メッセージなし")}</div>
+          <div class="stargift-card-amount">＋${Number(g.amount||0).toLocaleString("ja-JP")} SC</div>
+          <div class="stargift-card-date">${starGiftSafeDate(g.created_at)}</div>
+          <button class="stargift-button" data-peer-claim="${escapeHTML(g.id)}">受け取る</button>
+        </article>`).join(""):'<div class="stargift-empty">ユーザーからの受取待ちギフトはありません。</div>';
+        peerList.querySelectorAll("[data-peer-claim]").forEach(b=>b.onclick=()=>starGiftClaimPeer(win,b.dataset.peerClaim));
+        const reqList=content.querySelector("#stargiftRequestList");
+        reqList.innerHTML=requests.length?requests.map(r=>`<article class="stargift-card">
+          <div class="stargift-card-icon">🧾</div><div class="stargift-card-title">@${escapeHTML(r.requester_username)} からの請求</div>
+          <div class="stargift-card-reason">${escapeHTML(r.reason||"請求理由なし")}</div>
+          <div class="stargift-card-amount">−${Number(r.amount||0).toLocaleString("ja-JP")} SC</div>
+          <div class="stargift-card-date">${starGiftSafeDate(r.created_at)}</div>
+          <button class="stargift-button" data-accept-request="${escapeHTML(r.id)}">承諾して支払う</button>
+          <button class="stargift-secondary" data-decline-request="${escapeHTML(r.id)}">拒否する</button>
+        </article>`).join(""):'<div class="stargift-empty">あなた宛ての未承諾請求はありません。</div>';
+        reqList.querySelectorAll("[data-accept-request]").forEach(b=>b.onclick=()=>starGiftRespondRequest(win,b.dataset.acceptRequest,true));
+        reqList.querySelectorAll("[data-decline-request]").forEach(b=>b.onclick=()=>starGiftRespondRequest(win,b.dataset.declineRequest,false));
+        content.querySelector("#stargiftOutgoingList").innerHTML=outgoing.length?outgoing.map(r=>`<article class="stargift-card">
+          <div class="stargift-card-icon">${r.status==="accepted"?"✅":r.status==="declined"?"❌":"🧾"}</div>
+          <div class="stargift-card-title">@${escapeHTML(r.payer_username)} 宛て</div>
+          <div class="stargift-card-reason">${escapeHTML(r.reason||"請求理由なし")}</div>
+          <div class="stargift-card-amount">${Number(r.amount||0).toLocaleString("ja-JP")} SC</div>
+          <div class="stargift-card-date">状態：${r.status==="pending"?"承諾待ち":r.status==="accepted"?"成立・支払済み":r.status==="declined"?"拒否":escapeHTML(r.status)} · ${starGiftSafeDate(r.created_at)}</div>
+        </article>`).join(""):'<div class="stargift-empty">送信した請求はありません。</div>';
+        content.querySelector("#stargiftSentList").innerHTML=sent.length?sent.map(g=>`<article class="stargift-card">
+          <div class="stargift-card-icon">${g.status==="claimed"?"✅":"🎁"}</div>
+          <div class="stargift-card-title">@${escapeHTML(g.recipient_username)} 宛て</div>
+          <div class="stargift-card-reason">${escapeHTML(g.reason||"メッセージなし")}</div>
+          <div class="stargift-card-amount">−${Number(g.amount||0).toLocaleString("ja-JP")} SC</div>
+          <div class="stargift-card-date">状態：${g.status==="claimed"?"受取済み":g.status==="pending"?"受取待ち":escapeHTML(g.status)} · ${starGiftSafeDate(g.created_at)}</div>
+        </article>`).join(""):'<div class="stargift-empty">送信したギフトはありません。</div>';
+        status.textContent="更新完了。ギフト・請求の一覧を確認してください。";
     }catch(e){
         console.error("Star Gift load failed",e);
         status.textContent="取得できませんでした: "+(e?.message||"通信エラー");
-        list.innerHTML='<div class="stargift-empty">ギフトを取得できませんでした。パスワードやSupabaseの設定を確認してください。</div>';
     }finally{btn.disabled=false;}
 }
+async function starGiftSendToUser(win){
+    const c=win?.querySelector(".window-content");if(!c)return;
+    const status=c.querySelector("#stargiftStatus"),password=c.querySelector("#stargiftPassword").value;
+    const recipient=c.querySelector("#stargiftRecipient").value.trim();
+    const amount=Number(c.querySelector("#stargiftSendAmount").value);
+    const reason=c.querySelector("#stargiftSendReason").value.trim();
+    if(!password){status.textContent="先にパスワードを入力してください。";return;}
+    if(!recipient||!Number.isSafeInteger(amount)||amount<=0){status.textContent="User IDと正の整数の金額を入力してください。";return;}
+    const b=c.querySelector("#stargiftSendButton");b.disabled=true;
+    try{
+        const r=await starGiftRpcResult("staros_user_gift_send",{p_sender_username:stazonCurrentUser(),p_password:password,p_recipient_username:recipient,p_amount:amount,p_reason:reason});
+        starGiftSetBalance(r.balance);
+        c.querySelector("#stargiftRecipient").value="";c.querySelector("#stargiftSendAmount").value="";c.querySelector("#stargiftSendReason").value="";
+        status.textContent=`@${recipient} に ${amount.toLocaleString("ja-JP")} SC のギフトを送りました。相手の受取待ちです。`;
+        await starGiftLoad(win);
+    }catch(e){status.textContent="ギフト送信失敗: "+(e?.message||"通信エラー");}
+    finally{b.disabled=false;}
+}
+async function starGiftRequestPayment(win){
+    const c=win?.querySelector(".window-content");if(!c)return;
+    const status=c.querySelector("#stargiftStatus"),password=c.querySelector("#stargiftPassword").value;
+    const payer=c.querySelector("#stargiftPayer").value.trim();
+    const amount=Number(c.querySelector("#stargiftRequestAmount").value);
+    const reason=c.querySelector("#stargiftRequestReason").value.trim();
+    if(!password){status.textContent="先にパスワードを入力してください。";return;}
+    if(!payer||!Number.isSafeInteger(amount)||amount<=0){status.textContent="請求先User IDと正の整数の金額を入力してください。";return;}
+    const b=c.querySelector("#stargiftRequestButton");b.disabled=true;
+    try{
+        await starGiftRpcResult("staros_coin_request_create",{p_requester_username:stazonCurrentUser(),p_password:password,p_payer_username:payer,p_amount:amount,p_reason:reason});
+        c.querySelector("#stargiftPayer").value="";c.querySelector("#stargiftRequestAmount").value="";c.querySelector("#stargiftRequestReason").value="";
+        status.textContent=`@${payer} に ${amount.toLocaleString("ja-JP")} SC の支払いを請求しました。相手の承諾待ちです。`;
+        await starGiftLoad(win);
+    }catch(e){status.textContent="請求送信失敗: "+(e?.message||"通信エラー");}
+    finally{b.disabled=false;}
+}
+async function starGiftClaimPeer(win,giftId){
+    const c=win?.querySelector(".window-content");if(!c)return;
+    const password=c.querySelector("#stargiftPassword").value,status=c.querySelector("#stargiftStatus");
+    if(!password){status.textContent="受取前にパスワードを入力してください。";return;}
+    try{
+        const r=await starGiftRpcResult("staros_user_gift_claim",{p_username:stazonCurrentUser(),p_password:password,p_gift_id:giftId});
+        starGiftSetBalance(r.balance);status.textContent=`ギフトを受け取りました（＋${Number(r.amount||0).toLocaleString("ja-JP")} SC）。`;
+        await starGiftLoad(win);
+    }catch(e){status.textContent="受取失敗: "+(e?.message||"通信エラー");}
+}
+async function starGiftRespondRequest(win,requestId,accept){
+    const c=win?.querySelector(".window-content");if(!c)return;
+    const password=c.querySelector("#stargiftPassword").value,status=c.querySelector("#stargiftStatus");
+    if(!password){status.textContent="承諾・拒否の前にパスワードを入力してください。";return;}
+    try{
+        if(accept){
+            const r=await starGiftRpcResult("staros_coin_request_accept",{p_username:stazonCurrentUser(),p_password:password,p_request_id:requestId});
+            starGiftSetBalance(r.balance);
+            status.textContent=`請求を承諾し、${Number(r.amount||0).toLocaleString("ja-JP")} SCを支払いました。`;
+        }else{
+            await starGiftRpcResult("staros_coin_request_decline",{p_username:stazonCurrentUser(),p_password:password,p_request_id:requestId});
+            status.textContent="請求を拒否しました。送金は発生していません。";
+        }
+        await starGiftLoad(win);
+    }catch(e){status.textContent=(accept?"請求の承諾に失敗: ":"請求の拒否に失敗: ")+(e?.message||"通信エラー");}
+}
+
 async function starGiftClaim(win,giftId){
     const content=win?.querySelector(".window-content");
     if(!content || !window.stazonSupabase)return;

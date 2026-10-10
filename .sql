@@ -73,3 +73,17 @@ SELECT public.staros_admin_reset_password(
     '対象のUser ID',
     '新しいパスワード'
 );
+
+SELECT public.staros_admin_coin_adjust(
+    'staruser01',
+    'gift',
+    500,
+    'イベント報酬'
+);
+
+SELECT public.staros_admin_coin_adjust(
+    'staruser01',
+    'confiscate',
+    300,
+    '管理上の調整'
+);

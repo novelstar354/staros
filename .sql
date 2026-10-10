@@ -87,3 +87,15 @@ SELECT public.staros_admin_coin_adjust(
     300,
     '管理上の調整'
 );
+
+--log
+SELECT *
+FROM public.staros_coin_admin_log
+ORDER BY created_at DESC
+LIMIT 100;
+
+--一覧
+SELECT *
+FROM public.staros_gifts
+ORDER BY created_at DESC
+LIMIT 100;

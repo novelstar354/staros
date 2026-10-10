@@ -1234,6 +1234,18 @@ body.staros-light .window-title{color:#172033}.body.staros-light{}
 .stazon-permanent-badge{display:inline-block;margin-top:8px;padding:4px 8px;border:1px solid rgba(210,220,235,.25);border-radius:999px;font-size:10px;color:#d8e1ee}
 .stazon-limit-info{font-size:11px;color:#8293aa;margin-top:7px}
 @media(max-width:650px){.stazon-limit-row{grid-template-columns:1fr}.stazon-limit-row .stazon-field{width:100%;box-sizing:border-box}}
+
+/* ===== StarOS Gift app ===== */
+.stargift-app{height:100%;display:flex;flex-direction:column;background:linear-gradient(180deg,#090e17,#05080e);color:#eaf2ff;overflow:hidden}
+.stargift-top{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:18px 20px;border-bottom:1px solid rgba(255,255,255,.09);background:linear-gradient(135deg,#171b2b,#080d16)}
+.stargift-brand{display:flex;align-items:center;gap:12px}.stargift-logo{width:44px;height:44px;display:grid;place-items:center;border-radius:13px;background:linear-gradient(145deg,#f0e6b5,#9b8952);color:#19170e;font-size:25px;font-weight:900}
+.stargift-title{font-size:21px;font-weight:850;letter-spacing:1px}.stargift-sub{font-size:10px;color:#a99d75;margin-top:3px;letter-spacing:1px}
+.stargift-balance{padding:10px 14px;border:1px solid rgba(205,190,135,.2);border-radius:12px;background:rgba(255,255,255,.04);text-align:right;white-space:nowrap}.stargift-balance small{display:block;color:#a99d75;font-size:10px}.stargift-balance b{display:block;margin-top:3px;font-size:18px;color:#f1df9a}
+.stargift-main{flex:1;min-height:0;overflow:auto;padding:20px}.stargift-hero{padding:18px;border:1px solid rgba(205,190,135,.18);border-radius:15px;background:radial-gradient(circle at 85% 20%,rgba(209,177,82,.12),transparent 35%),rgba(255,255,255,.025);margin-bottom:15px}.stargift-hero h2{margin:0;font-size:20px}.stargift-hero p{margin:7px 0 0;color:#8798b2;font-size:12px;line-height:1.6}
+.stargift-auth{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;margin-top:14px}.stargift-input{width:100%;min-width:0;padding:11px 12px;border:1px solid #344158;border-radius:9px;background:#080e19;color:#fff;outline:0}.stargift-input:focus{border-color:#b9a35f}.stargift-button{border:1px solid #72623a;background:linear-gradient(135deg,#514525,#282416);color:#f5e7b0;border-radius:9px;padding:10px 14px;cursor:pointer;font-weight:750}.stargift-button:hover{filter:brightness(1.15)}.stargift-button:disabled{opacity:.5;cursor:wait}
+.stargift-status{min-height:20px;margin:10px 0;color:#9fb0c8;font-size:12px;white-space:pre-wrap}.stargift-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px}.stargift-card{padding:16px;border:1px solid rgba(205,190,135,.16);border-radius:13px;background:rgba(255,255,255,.03);display:flex;flex-direction:column;min-height:190px}.stargift-card-icon{font-size:31px}.stargift-card-title{font-size:14px;font-weight:800;margin-top:9px}.stargift-card-reason{font-size:12px;color:#91a0b6;line-height:1.55;margin-top:6px;flex:1;overflow-wrap:anywhere}.stargift-card-amount{font-size:21px;font-weight:850;color:#f1df9a;margin:12px 0}.stargift-card-date{font-size:10px;color:#71839d;margin-bottom:10px}.stargift-empty{padding:30px 12px;text-align:center;color:#8192ad;border:1px dashed rgba(205,190,135,.18);border-radius:12px;grid-column:1/-1}.stargift-foot{font-size:10px;color:#687c98;line-height:1.6;margin-top:15px}
+@media(max-width:600px){.stargift-top{align-items:flex-start;padding:13px}.stargift-balance{padding:8px}.stargift-main{padding:12px}.stargift-auth{grid-template-columns:1fr}.stargift-auth .stargift-button{min-height:42px}}
+
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
@@ -1337,6 +1349,7 @@ window.stazonSupabase=(window.supabase&&window.supabase.createClient)
       <button onclick="addStarDesktopApp('settings','⚙️','Star Settings')">⚙️ 設定を追加</button>
       <button onclick="addStarDesktopApp('stazon','★','StarNexus')">★ StarNexusを追加</button>
       <button onclick="addStarDesktopApp('starkatsu','🌟','Star活')">🌟 Star活を追加</button>
+      <button onclick="addStarDesktopApp('stargift','🎁','Star Gift')">🎁 Star Giftを追加</button>
       <button onclick="addStarDesktopFilePrompt()">📄 ファイルを追加</button>
       <button onclick="addStarDesktopTrash()">🗑️ ゴミ箱を追加</button>
     </div>
@@ -1399,6 +1412,10 @@ window.stazonSupabase=(window.supabase&&window.supabase.createClient)
 
     <button class="start-app" onclick="openStarKatsu();closeStartMenu()">
         <span class="app-icon">🌟</span><span class="app-name">Star活</span>
+    </button>
+
+    <button class="start-app" onclick="openStarGift();closeStartMenu()">
+        <span class="app-icon">🎁</span><span class="app-name">Star Gift</span>
     </button>
 
     <button class="start-app"
@@ -2286,7 +2303,7 @@ function ensureStarHomeDefaults(){
   const defaults=[
     ['explorer','📁','Star Explorer'],['terminal','💻','Star Terminal'],['settings','⚙️','Star Settings'],
     ['browser','🌐','Star Browser'],['calculator','🧮','Calculator'],['texteditor','📝','Text Editor'],
-    ['appstore','🛒','Star Apps Store'],['stazon','★','StarNexus'],['trash','🗑️','ゴミ箱']
+    ['appstore','🛒','Star Apps Store'],['stazon','★','StarNexus'],['stargift','🎁','Star Gift'],['trash','🗑️','ゴミ箱']
   ];
   let items=starDesktopLoad(), changed=false;
 
@@ -2385,6 +2402,7 @@ function starDesktopOpenItem(item){
     else if(item.app==='texteditor')openTextEditor();
     else if(item.app==='appstore')openAppStore();
     else if(item.app==='stazon')openStazon();
+     else if(item.app==='stargift')openStarGift();
     else if(item.app==='about')openAbout();
     else if(item.app==='star'||item.app==='staride')launchInstalledStarApp(item.app);
     else if(item.app && (item.app.startsWith('userapp_') || getStoreApp(item.app)?.userApp)){
@@ -3312,6 +3330,7 @@ function setupStarStartAppDrag(){
       ['openAppStore','appstore','🛒','Star Apps Store'],
       ['openStazon','stazon','★','StarNexus'],
       ['openStarKatsu','starkatsu','🌟','Star活'],
+      ['openStarGift','stargift','🎁','Star Gift'],
       ['openTerminal','terminal','💻','Star Terminal'],
       ['openSettings','settings','⚙️','Star Settings'],
       ['openAbout','about','★','About StarOS'],
@@ -7633,6 +7652,127 @@ setInterval(()=>{
     });
 },500);
 
+
+
+/* =========================================================
+   STAR GIFT
+   Supabase上の受取待ちギフトを本人確認して受け取る
+========================================================= */
+function openStarGift(){
+    if(!getAccount()?.username){
+        showToast("Star Giftを使うにはStarOSにログインしてください");
+        startStarLogin();
+        return null;
+    }
+    const win=openAppWindow("Star Gift","🎁","stargift-window");
+    win.style.width="850px";
+    win.style.height="620px";
+    win.dataset.starDesktop=String(starCurrentDesktop);
+    renderStarGift(win);
+    return win;
+}
+function renderStarGift(win){
+    const content=win.querySelector(".window-content");
+    const username=stazonCurrentUser();
+    content.style.overflow="hidden";
+    content.innerHTML=`
+      <div class="stargift-app">
+        <div class="stargift-top">
+          <div class="stargift-brand"><div class="stargift-logo">★</div><div><div class="stargift-title">Star Gift</div><div class="stargift-sub">A LITTLE STAR FOR YOU</div></div></div>
+          <div class="stargift-balance"><small>現在のStarCoin</small><b id="stargiftBalance">${stazonGetCoins().toLocaleString("ja-JP")} SC</b></div>
+        </div>
+        <div class="stargift-main">
+          <div class="stargift-hero">
+            <h2>🎁 ギフトボックス</h2>
+            <p><b>@${escapeHTML(username)}</b> 宛てのStarCoinギフトを確認して受け取れます。受取にはStarOSアカウントのパスワード確認が必要です。</p>
+            <div class="stargift-auth">
+              <input class="stargift-input" id="stargiftPassword" type="password" autocomplete="current-password" placeholder="StarOSアカウントのパスワード">
+              <button class="stargift-button" id="stargiftLoad">ギフトを確認</button>
+            </div>
+            <div class="stargift-status" id="stargiftStatus" role="status">パスワードを入力して「ギフトを確認」を押してください。</div>
+          </div>
+          <div class="stargift-list" id="stargiftList"><div class="stargift-empty">ギフト一覧はまだ読み込まれていません。</div></div>
+          <div class="stargift-foot">ギフトは受取操作が完了するまで残高に加算されません。同じギフトは一度だけ受け取れます。受取後はStarCoin残高が更新されます。</div>
+        </div>
+      </div>`;
+    const pass=content.querySelector("#stargiftPassword");
+    const load=content.querySelector("#stargiftLoad");
+    load.onclick=()=>starGiftLoad(win);
+    pass.addEventListener("keydown",e=>{if(e.key==="Enter")starGiftLoad(win)});
+}
+async function starGiftLoad(win){
+    const content=win?.querySelector(".window-content");
+    if(!content || !window.stazonSupabase)return;
+    const password=content.querySelector("#stargiftPassword")?.value||"";
+    const status=content.querySelector("#stargiftStatus");
+    const list=content.querySelector("#stargiftList");
+    const btn=content.querySelector("#stargiftLoad");
+    if(!password){status.textContent="パスワードを入力してください。";return;}
+    btn.disabled=true;status.textContent="ギフトを確認しています…";list.innerHTML="";
+    try{
+        const {data,error}=await window.stazonSupabase.rpc("staros_list_my_gifts",{
+            p_username:stazonCurrentUser(),p_password:password
+        });
+        if(error)throw error;
+        let result=Array.isArray(data)?data[0]:data;
+        if(typeof result==="string"){try{result=JSON.parse(result)}catch(e){}}
+        if(!result || result.success!==true)throw new Error(result?.error||"ギフト一覧を取得できませんでした");
+        const gifts=Array.isArray(result.gifts)?result.gifts:[];
+        if(!gifts.length){
+            list.innerHTML='<div class="stargift-empty">受取待ちのギフトはありません。新しいギフトが届いたらここに表示されます。</div>';
+            status.textContent="確認完了：受取待ちギフトはありません。";
+        }else{
+            list.innerHTML=gifts.map(g=>`<article class="stargift-card" data-gift-id="${escapeHTML(g.id)}">
+              <div class="stargift-card-icon">🎁</div><div class="stargift-card-title">StarCoinギフト</div>
+              <div class="stargift-card-reason">${escapeHTML(g.reason||"StarOSからのギフト")}</div>
+              <div class="stargift-card-amount">＋${Number(g.amount||0).toLocaleString("ja-JP")} SC</div>
+              <div class="stargift-card-date">${g.created_at?new Date(g.created_at).toLocaleString("ja-JP"):""}</div>
+              <button class="stargift-button" data-claim-gift="${escapeHTML(g.id)}">受け取る</button>
+            </article>`).join("");
+            list.querySelectorAll("[data-claim-gift]").forEach(b=>b.onclick=()=>starGiftClaim(win,b.dataset.claimGift));
+            status.textContent=`受取待ちギフト：${gifts.length}件`;
+        }
+    }catch(e){
+        console.error("Star Gift load failed",e);
+        status.textContent="取得できませんでした: "+(e?.message||"通信エラー");
+        list.innerHTML='<div class="stargift-empty">ギフトを取得できませんでした。パスワードやSupabaseの設定を確認してください。</div>';
+    }finally{btn.disabled=false;}
+}
+async function starGiftClaim(win,giftId){
+    const content=win?.querySelector(".window-content");
+    if(!content || !window.stazonSupabase)return;
+    const password=content.querySelector("#stargiftPassword")?.value||"";
+    const status=content.querySelector("#stargiftStatus");
+    const button=content.querySelector(`[data-claim-gift="${CSS.escape(String(giftId))}"]`);
+    if(!password){status.textContent="受取前にパスワードを入力してください。";return;}
+    if(button)button.disabled=true;
+    status.textContent="ギフトを受け取っています…";
+    try{
+        const {data,error}=await window.stazonSupabase.rpc("staros_claim_gift",{
+            p_username:stazonCurrentUser(),p_password:password,p_gift_id:giftId
+        });
+        if(error)throw error;
+        let result=Array.isArray(data)?data[0]:data;
+        if(typeof result==="string"){try{result=JSON.parse(result)}catch(e){}}
+        if(!result || result.success!==true)throw new Error(result?.error||"ギフトを受け取れませんでした");
+        const balance=Math.max(0,Math.floor(Number(result.balance)||0));
+        stazonSetCoins(balance);
+        const balanceLabel=content.querySelector("#stargiftBalance");
+        if(balanceLabel)balanceLabel.textContent=balance.toLocaleString("ja-JP")+" SC";
+        status.textContent=`受取完了！ ${Number(result.amount||0).toLocaleString("ja-JP")} StarCoinを受け取りました。`;
+        await starGiftLoad(win);
+        status.textContent=`受取完了！ ${Number(result.amount||0).toLocaleString("ja-JP")} StarCoinを受け取りました。`;
+        // 他の開いているStarNexusウィンドウにも確定残高を反映
+        document.querySelectorAll(".stazon-window").forEach(w=>{
+            const b=w.querySelector(".stazon-balance-value");
+            if(b)b.textContent=balance.toLocaleString("ja-JP")+" SC";
+        });
+    }catch(e){
+        console.error("Star Gift claim failed",e);
+        status.textContent="受取失敗: "+(e?.message||"通信エラー");
+        if(button)button.disabled=false;
+    }
+}
 
 /* =========================================================
    STAR活

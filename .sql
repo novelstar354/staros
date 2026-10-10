@@ -1,4 +1,4 @@
--- Ban
+e-- Ban
 UPDATE public.staros_accounts
 SET
     is_banned = true,
@@ -87,6 +87,20 @@ SELECT public.staros_admin_coin_adjust(
     300,
     '管理上の調整'
 );
+
+-- 全員配布
+SELECT public.staros_admin_coin_broadcast(
+    500::bigint,
+    '全員配布イベント'
+);
+
+
+
+SELECT public.staros_admin_coin_reduce_all(
+    100,
+    '全員一律減額'
+);
+
 
 --log
 SELECT *

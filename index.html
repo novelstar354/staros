@@ -2414,7 +2414,8 @@ function starDesktopOpenItem(item){
     else if(item.app==='texteditor')openTextEditor();
     else if(item.app==='appstore')openAppStore();
     else if(item.app==='stazon')openStazon();
-     else if(item.app==='stargift')openStarGift();
+    else if(item.app==='starkatsu')openStarKatsu();
+    else if(item.app==='stargift')openStarGift();
     else if(item.app==='about')openAbout();
     else if(item.app==='star'||item.app==='staride')launchInstalledStarApp(item.app);
     else if(item.app && (item.app.startsWith('userapp_') || getStoreApp(item.app)?.userApp)){
@@ -2497,8 +2498,24 @@ function setupStarDesktopDrop(){
         desktop.classList.remove('star-desktop-drop-ready');
         const appId=e.dataTransfer.getData('application/x-staros-app');
         if(appId){
-            const app=getStoreApp(appId);
+            // 内蔵アプリはストア登録されていないため、直接ショートカットを作成する
+            const builtins={
+                explorer:{id:'explorer',name:'Star Explorer',icon:'📁'},
+                browser:{id:'browser',name:'Star Browser',icon:'🌐'},
+                calculator:{id:'calculator',name:'Calculator',icon:'🧮'},
+                texteditor:{id:'texteditor',name:'Text Editor',icon:'📝'},
+                appstore:{id:'appstore',name:'Star Apps Store',icon:'🛒'},
+                stazon:{id:'stazon',name:'StarNexus',icon:'★'},
+                starkatsu:{id:'starkatsu',name:'Star活',icon:'🌟'},
+                stargift:{id:'stargift',name:'Star Gift',icon:'🎁'},
+                terminal:{id:'terminal',name:'Star Terminal',icon:'💻'},
+                settings:{id:'settings',name:'Star Settings',icon:'⚙️'},
+                about:{id:'about',name:'About StarOS',icon:'★'},
+                trash:{id:'trash',name:'ゴミ箱',icon:'🗑️'}
+            };
+            const app=getStoreApp(appId)||builtins[appId]||(appId==='star'||appId==='staride'?{id:appId,name:appId==='star'?'STar':'Star IDE',icon:appId==='star'?'⭐':'💻'}:null);
             if(app)addStarDesktopAppShortcut(app);
+            else showToast('このアプリをホーム画面に追加できませんでした');
             return;
         }
         const path=e.dataTransfer.getData('application/x-staros-file');

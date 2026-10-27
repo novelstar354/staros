@@ -74,12 +74,16 @@ SELECT public.staros_admin_reset_password(
     '新しいパスワード'
 );
 
+--各ユーザーギフト
+
 SELECT public.staros_admin_coin_adjust(
     'staruser01',
     'gift',
     500,
     'イベント報酬'
 );
+
+--各ユーザー没収
 
 SELECT public.staros_admin_coin_adjust(
     'staruser01',
